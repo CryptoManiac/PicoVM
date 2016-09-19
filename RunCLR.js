@@ -11,5 +11,4 @@ appDomain.loadAssembly("Program.exe", function(a) {
         return;
     }
     a.run();
-    a.run();
 });
