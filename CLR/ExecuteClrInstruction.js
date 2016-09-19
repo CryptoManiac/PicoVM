@@ -81,6 +81,12 @@ function ExecuteClrInstruction(thread) {
         thread.stack.push(a+b);
 		frame.instructionPointer += 1;
 		return true;
+	case 0x61: // xor
+		var a = thread.stack.pop();
+		var b = thread.stack.pop();
+        thread.stack.push(a ^ b);
+		frame.instructionPointer += 1;
+		return true;
     case 0x72: // ldstr (T)
         var stringToken = readToken(methodData, frame.instructionPointer + 1);
         frame.instructionPointer += 5;
