@@ -19,10 +19,12 @@ namespace SimpleApp
 
 			int a = -1;
 			int b = 2;
+			int c = 3;
+			int d = 8;
 			
-			int c = a + b;
+			int e = (a + b) * c - d;
 			
-			Console.WriteLine(c);
+			Console.WriteLine(e);
         }
     }
 }

@@ -97,8 +97,8 @@ function ThreadExecute() {
             break;
         case 5:
             // method execution
-            result = ExecuteClrInstruction(this);
-            break;
+            result = ExecuteClrInstruction(this);			
+			break;
         case 6:
             for(var i=0;i<frame.argumentsCount;++i) {
                 this.stack.pop();
