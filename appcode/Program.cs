@@ -23,7 +23,16 @@ namespace SimpleApp
 			int d = 8;
 			
 			int e = (a + b) * c - d;
-			
+
+			Console.WriteLine(e);
+
+            a = 4;
+            b = 2;
+            c = 6;
+            d = -8;
+
+            e = (a + c) * d - b;
+
 			Console.WriteLine(e);
         }
     }

@@ -5,8 +5,9 @@ function ExecuteClrInstruction(thread) {
     if(frame.instructionPointer >= methodData.length) {
         throw "End of method body";
     }
-    	
-    switch(methodData[frame.instructionPointer]) {
+
+    var opcode = methodData[frame.instructionPointer];
+    switch(opcode) {
     case 0x00: // nop
         frame.instructionPointer++;
         return true;
@@ -56,91 +57,70 @@ function ExecuteClrInstruction(thread) {
 		frame.instructionPointer++;
 		return true;
 	case 0x16: // ldc.i4.0
-        thread.stack.push(0);
-		frame.instructionPointer++;
-		return true;
 	case 0x17: // ldc.i4.1
-		thread.stack.push(1);
-		frame.instructionPointer++;
-		return true;
 	case 0x18: // ldc.i4.2
-        thread.stack.push(2);
-		frame.instructionPointer++;
-		return true;
 	case 0x19: // ldc.i4.3
-        thread.stack.push(3);
-		frame.instructionPointer++;
-		return true;
 	case 0x1A: // ldc.i4.4
-        thread.stack.push(4);
-		frame.instructionPointer++;
-		return true;
 	case 0x1B: // ldc.i4.5
-        thread.stack.push(5);
-		frame.instructionPointer++;
-		return true;
 	case 0x1C: // ldc.i4.6
-        thread.stack.push(6);
-		frame.instructionPointer++;
-		return true;
 	case 0x1D: // ldc.i4.7
-        thread.stack.push(7);
-		frame.instructionPointer++;
-		return true;
 	case 0x1E: // ldc.i4.8
-        thread.stack.push(8);
+        thread.stack.push(opcode - 0x16);
 		frame.instructionPointer++;
 		return true;
+    case 0x1F: // ldc.i4.s
+        var value = methodData[frame.instructionPointer + 1];
+        if (value > 127)
+            value -= 256;
+        thread.stack.push(value);
+        frame.instructionPointer += 2;
+        return true;
 	case 0x26: // pop
         thread.stack.pop();
 		frame.instructionPointer++;
-		return true;	
+		return true;
 	case 0x5A: // mul
-		var a = thread.stack.pop();
-		var b = thread.stack.pop();
-        thread.stack.push(a * b);
-		frame.instructionPointer++;
-		return true;
 	case 0x5F: // and
-		var b = thread.stack.pop();
-		var a = thread.stack.pop();
-        thread.stack.push(a & b);
-		frame.instructionPointer++;
-		return true;
 	case 0x58: // add
-		var a = thread.stack.pop();
-		var b = thread.stack.pop();
-        thread.stack.push(a + b);
-		frame.instructionPointer++;
-		return true;
 	case 0x59: // sub
-		var b = thread.stack.pop();
-		var a = thread.stack.pop();
-        thread.stack.push(a - b);
-		frame.instructionPointer++;
-		return true;
 	case 0x60: // or
-		var b = thread.stack.pop();
-		var a = thread.stack.pop();
-        thread.stack.push(a | b);
-		frame.instructionPointer++;
-		return true;
 	case 0x61: // xor
 		var b = thread.stack.pop();
 		var a = thread.stack.pop();
-        thread.stack.push(a ^ b);
-		frame.instructionPointer++;
-		return true;
-	case 0x65: // neg
-		var a = thread.stack.pop();
-        thread.stack.push(-a);
-		frame.instructionPointer++;
-		return true;
-	case 0x66: // not
-		var a = thread.stack.pop();
-        thread.stack.push(~a);
-		frame.instructionPointer++;
-		return true;
+        switch(opcode) {
+        case 0x5A: // mul
+            thread.stack.push(a * b);
+            break;
+        case 0x5F: // and
+            thread.stack.push(a & b);
+            break;
+        case 0x58: // add
+            thread.stack.push(a + b);
+            break;
+        case 0x59: // sub
+            thread.stack.push(a - b);
+            break;
+        case 0x60: // or
+            thread.stack.push(a | b);
+            break;
+        case 0x61: // xor
+            thread.stack.push(a ^ b);
+        };
+        frame.instructionPointer++;
+        return true;
+    case 0x65: // neg
+    case 0x66: // not
+        var a = thread.stack.pop();
+        switch(opcode) {
+        case 0x65: // neg
+            thread.stack.push(-a);
+            break;
+        case 0x66: // not
+            thread.stack.push(~a);
+            break;
+        }
+        frame.instructionPointer++;
+        return true;
     case 0x72: // ldstr (T)
         var stringToken = readToken(methodData, frame.instructionPointer + 1);
         frame.instructionPointer += 5;
@@ -148,7 +128,7 @@ function ExecuteClrInstruction(thread) {
         thread.stack.push(str);
         return true;
     default: 
-        throw "Unknown instruction:" + methodData[frame.instructionPointer];
+        throw "Unknown instruction:" + opcode.toString(16);
     }
     
     function readUS(index) {
