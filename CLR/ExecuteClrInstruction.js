@@ -75,6 +75,12 @@ function ExecuteClrInstruction(thread) {
         thread.stack.push(8);
 		frame.instructionPointer += 1;
 		return true;
+	case 0x5F: // and
+		var a = thread.stack.pop();
+		var b = thread.stack.pop();
+        thread.stack.push(a & b);
+		frame.instructionPointer += 1;
+		return true;
 	case 0x58: // add
 		var a = thread.stack.pop();
 		var b = thread.stack.pop();
@@ -85,6 +91,11 @@ function ExecuteClrInstruction(thread) {
 		var a = thread.stack.pop();
 		var b = thread.stack.pop();
         thread.stack.push(a ^ b);
+		frame.instructionPointer += 1;
+		return true;
+	case 0x66: // not
+		var a = thread.stack.pop();
+        thread.stack.push(~a);
 		frame.instructionPointer += 1;
 		return true;
     case 0x72: // ldstr (T)
