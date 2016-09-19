@@ -35,6 +35,10 @@ function ExecuteClrInstruction(thread) {
     case 0x2A: // ret
         frame.state = 6;
         return true;
+	case 0x15:
+		thread.stack.push(-1);
+		frame.instructionPointer += 1;
+		return true;
 	case 0x16: // ldc.i4.0
         thread.stack.push(0);
 		frame.instructionPointer += 1;
