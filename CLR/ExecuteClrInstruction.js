@@ -87,6 +87,12 @@ function ExecuteClrInstruction(thread) {
         thread.stack.push(a+b);
 		frame.instructionPointer += 1;
 		return true;
+	case 0x60: // or
+		var a = thread.stack.pop();
+		var b = thread.stack.pop();
+        thread.stack.push(a | b);
+		frame.instructionPointer += 1;
+		return true;
 	case 0x61: // xor
 		var a = thread.stack.pop();
 		var b = thread.stack.pop();
