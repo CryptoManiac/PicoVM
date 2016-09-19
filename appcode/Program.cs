@@ -34,6 +34,12 @@ namespace SimpleApp
             e = (a + c) * d - b;
 
 			Console.WriteLine(e);
+
+            a = -250000;
+            d = 1;
+            e = (a - c) * d - b;
+
+			Console.WriteLine(e);           
         }
     }
 }

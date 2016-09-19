@@ -75,6 +75,14 @@ function ExecuteClrInstruction(thread) {
         thread.stack.push(value);
         frame.instructionPointer += 2;
         return true;
+    case 0x20: // ldc.i4
+        var value = ((methodData[frame.instructionPointer + 1]) | 
+                    (methodData[frame.instructionPointer  + 2] << 8) | 
+                    (methodData[frame.instructionPointer  + 3] << 16) | 
+                    (methodData[frame.instructionPointer  + 4] << 24));
+        thread.stack.push(value);
+        frame.instructionPointer += 5;
+        return true;
 	case 0x26: // pop
         thread.stack.pop();
 		frame.instructionPointer++;
