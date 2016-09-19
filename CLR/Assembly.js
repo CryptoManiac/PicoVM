@@ -71,11 +71,11 @@ function readAssembly(path, callback) {
         
         peHeader.optional = { standard: {}, nt: {}, directories: {}};
         if(data[peOffset + 0] != 0x0B || data[peOffset + 1] != 0x01)
-            throw "Invalid PE standard magic";
-        if(data[peOffset + 2] != 0x08)
-            throw "Invalid PE standard lmajor";
+            throw "Invalid PE standard magic" + data[peOffset + 0] + ' ' + data[peOffset + 1];
+        if(data[peOffset + 2] != 0x08 && data[peOffset + 2] != 0x30)
+            throw "Invalid PE standard lmajor: " + data[peOffset + 2];
         if(data[peOffset + 3] != 0x00)
-            throw "Invalid PE standard lminor";
+            throw "Invalid PE standard lminor" + data[peOffset + 3];
         peHeader.optional.standard.codeSize = read32bit(data, peOffset + 4);
         peHeader.optional.standard.initializedDataSize = read32bit(data, peOffset + 8);
         peHeader.optional.standard.uninitializedDataSize = read32bit(data, peOffset + 12);

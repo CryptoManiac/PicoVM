@@ -12,11 +12,17 @@ namespace SimpleApp
     {
         static void Main(string[] args)
         {
-            string message = "Hello, world!";
+/*
+			string message = "Hello, world!";
             Console.WriteLine(message);
-            Console.WriteLine(message);
-            Console.WriteLine(message);
-            Console.WriteLine(message);
+*/
+
+			int a = 1;
+			int b = 2;
+			
+			int c = a + b;
+			
+			Console.WriteLine(c);
         }
     }
 }

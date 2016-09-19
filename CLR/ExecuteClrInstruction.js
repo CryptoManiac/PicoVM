@@ -5,7 +5,7 @@ function ExecuteClrInstruction(thread) {
     if(frame.instructionPointer >= methodData.length) {
         throw "End of method body";
     }
-    
+    	
     switch(methodData[frame.instructionPointer]) {
     case 0x00: // nop
         frame.instructionPointer++;
@@ -35,6 +35,48 @@ function ExecuteClrInstruction(thread) {
     case 0x2A: // ret
         frame.state = 6;
         return true;
+	case 0x16: // ldc.i4.0
+        thread.stack.push(0);
+		frame.instructionPointer += 1;
+		return true;
+	case 0x17: // ldc.i4.1
+		thread.stack.push(1);
+		frame.instructionPointer += 1;
+		return true;
+	case 0x18: // ldc.i4.2
+        thread.stack.push(2);
+		frame.instructionPointer += 1;
+		return true;
+	case 0x19: // ldc.i4.3
+        thread.stack.push(3);
+		frame.instructionPointer += 1;
+		return true;
+	case 0x1A: // ldc.i4.4
+        thread.stack.push(4);
+		frame.instructionPointer += 1;
+		return true;
+	case 0x1B: // ldc.i4.5
+        thread.stack.push(5);
+		frame.instructionPointer += 1;
+		return true;
+	case 0x1C: // ldc.i4.6
+        thread.stack.push(6);
+		frame.instructionPointer += 1;
+		return true;
+	case 0x1D: // ldc.i4.7
+        thread.stack.push(7);
+		frame.instructionPointer += 1;
+		return true;
+	case 0x1E: // ldc.i4.8
+        thread.stack.push(8);
+		frame.instructionPointer += 1;
+		return true;
+	case 0x58: // add
+		var a = thread.stack.pop();
+		var b = thread.stack.pop();
+        thread.stack.push(a+b);
+		frame.instructionPointer += 1;
+		return true;
     case 0x72: // ldstr (T)
         var stringToken = readToken(methodData, frame.instructionPointer + 1);
         frame.instructionPointer += 5;
