@@ -1,5 +1,5 @@
 /**
- * Very, very, very simple testing program. Conditional jumps, argument access, arithmetics, etc. aren't supported yet.
+ * Very, very, very simple testing program. Conditional jumps, etc. aren't supported yet.
  */
 
 using System;

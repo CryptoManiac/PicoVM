@@ -61,10 +61,7 @@ function ThreadExecute() {
             frame.signature = CliSignatureParser.parseMethodDefSig(methodDefSignature.createReader());
             frame.state = 5; 
             frame.argumentsCount = getMethodArgumentsInStack(frame.signature);
-            frame.arguments = new Array();
-            for (var n = frame.argumentsCount - 1; n >= 0; --n) {
-                frame.arguments[n] = this.stack.pop();
-            }
+            frame.arguments = this.stack.splice(this.stack.length - frame.argumentsCount, frame.argumentsCount);
             if(frame.methodBody.localVarSigTok != undefined &&
                 frame.methodBody.localVarSigTok != 0) {
                 frame.locals = new Array();
