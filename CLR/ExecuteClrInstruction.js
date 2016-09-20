@@ -1,6 +1,10 @@
+const Int64 = require('int64-native');
+
 function ExecuteClrInstruction(thread) {
     var frame = thread.callStack[thread.callStack.length - 1];
     var methodData = frame.methodBody.data;
+
+    // console.log(thread.stack, frame.locals); 
     
     if(frame.instructionPointer >= methodData.length) {
         throw "End of method body";
@@ -83,6 +87,22 @@ function ExecuteClrInstruction(thread) {
         thread.stack.push(value);
         frame.instructionPointer += 5;
         return true;
+    case 0x21: // ldc.i8
+        /**
+         * JS is incapable of handling 64 bit integers directly.
+         */
+        var v1 = ((methodData[frame.instructionPointer + 1]) | 
+                    (methodData[frame.instructionPointer  + 2] << 8) | 
+                    (methodData[frame.instructionPointer  + 3] << 16) | 
+                    (methodData[frame.instructionPointer  + 4] << 24));
+        var v2 = ((methodData[frame.instructionPointer + 5]) | 
+                    (methodData[frame.instructionPointer  + 6] << 8) | 
+                    (methodData[frame.instructionPointer  + 7] << 16) | 
+                    (methodData[frame.instructionPointer  + 8] << 24));
+        var value = new Int64(v2, v1);
+        thread.stack.push(value);
+        frame.instructionPointer += 9;
+        return true;
 	case 0x26: // pop
         thread.stack.pop();
 		frame.instructionPointer++;
@@ -95,36 +115,66 @@ function ExecuteClrInstruction(thread) {
 	case 0x61: // xor
 		var b = thread.stack.pop();
 		var a = thread.stack.pop();
-        switch(opcode) {
-        case 0x5A: // mul
-            thread.stack.push(a * b);
-            break;
-        case 0x5F: // and
-            thread.stack.push(a & b);
-            break;
-        case 0x58: // add
-            thread.stack.push(a + b);
-            break;
-        case 0x59: // sub
-            thread.stack.push(a - b);
-            break;
-        case 0x60: // or
-            thread.stack.push(a | b);
-            break;
-        case 0x61: // xor
-            thread.stack.push(a ^ b);
-        };
+
+        if (typeof a == 'object') {
+            /**
+             * int64-native workaround for 64 bit integers.
+             */
+            switch(opcode) {
+            case 0x5A: // mul
+                thread.stack.push(a.mul(b)); // NOTE: patched version required
+                break;
+            case 0x5F: // and
+                thread.stack.push(a.and(b));
+                break;
+            case 0x58: // add
+                thread.stack.push(a.add(b));
+                break;
+            case 0x59: // sub
+                thread.stack.push(a.sub(b));
+                break;
+            case 0x60: // or
+                thread.stack.push(a.or(b));
+                break;
+            case 0x61: // xor
+                thread.stack.push(a.xor(b));
+            };
+        } else {
+            switch(opcode) {
+            case 0x5A: // mul
+                thread.stack.push(a * b);
+                break;
+            case 0x5F: // and
+                thread.stack.push(a & b);
+                break;
+            case 0x58: // add
+                thread.stack.push(a + b);
+                break;
+            case 0x59: // sub
+                thread.stack.push(a - b);
+                break;
+            case 0x60: // or
+                thread.stack.push(a | b);
+                break;
+            case 0x61: // xor
+                thread.stack.push(a ^ b);
+            };
+        }
         frame.instructionPointer++;
         return true;
     case 0x65: // neg
     case 0x66: // not
+    case 0x6A: // conv.i8
         var a = thread.stack.pop();
         switch(opcode) {
         case 0x65: // neg
-            thread.stack.push(-a);
+            thread.stack.push(-a); // TODO: Int64 
             break;
         case 0x66: // not
-            thread.stack.push(~a);
+            thread.stack.push(~a); // TODO: Int64 
+            break;
+        case 0x6A: // conv.i8
+            thread.stack.push(new Int64(a)); 
             break;
         }
         frame.instructionPointer++;

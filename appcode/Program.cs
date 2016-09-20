@@ -17,6 +17,7 @@ namespace SimpleApp
             Console.WriteLine(message);
 */
 
+/*
 			int a = -1;
 			int b = 2;
 			int c = 3;
@@ -40,6 +41,18 @@ namespace SimpleApp
             e = (a - c) * d - b;
 
 			Console.WriteLine(e);           
+
+            long f = 0xefffffffff;
+
+            f = f + e;
+*/
+
+            long f = 0xefffffffff;
+            int e = 11;
+
+            f = f * e;
+
+            Console.WriteLine(f);
         }
     }
 }

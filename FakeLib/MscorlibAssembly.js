@@ -10,18 +10,23 @@ function MscorlibAssembly() {
                 console.log(thread.stack[thread.stack.length - 1]);
                 return true;
             },
+            WriteLine$_0_1_1_10: function(thread) {
+                console.log(thread.stack[thread.stack.length - 1]);
+                return true;
+            },
             WriteLine$_0_1_1_8: function(thread) {
                 console.log(thread.stack[thread.stack.length - 1]);
                 return true;
             }
         }
     }
-    this.createCall = function(type, method) {		
+    this.createCall = function(type, method) {
         var typeFullName = (type.typeNamespace + "." + type.typeName).replace(".", "$");
         var nativeType = this.types[typeFullName];
         var methodFullName = method.name + "$";
         for(var i=0;i<method.signature.length;++i)
             methodFullName += "_" + method.signature[i].toString();
+
         var fn = nativeType[methodFullName];
         return fn;
     };
