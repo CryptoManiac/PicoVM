@@ -4,7 +4,7 @@ function ExecuteClrInstruction(thread) {
     var frame = thread.callStack[thread.callStack.length - 1];
     var methodData = frame.methodBody.data;
 
-    // console.log(thread.stack, frame.locals); 
+    //console.log(thread.stack, frame.locals, frame.arguments);
     
     if(frame.instructionPointer >= methodData.length) {
         throw "End of method body";
@@ -15,6 +15,14 @@ function ExecuteClrInstruction(thread) {
     case 0x00: // nop
         frame.instructionPointer++;
         return true;
+    case 0x02: // ldarg.0
+    case 0x03: // ldarg.1
+    case 0x04: // ldarg.2
+    case 0x05: // ldarg.3
+        var index = methodData[frame.instructionPointer++] - 0x02;
+        var value = frame.arguments[index];
+        thread.stack.push(value);
+        return true;
     case 0x06: // ldloc 0..3
     case 0x07:
     case 0x08:
@@ -23,11 +31,17 @@ function ExecuteClrInstruction(thread) {
         var value = frame.locals[index];
         thread.stack.push(value);
         return true;
+    case 0x10: // starg.s
+        var value = thread.stack.pop();
+        var index = methodData[frame.instructionPointer + 1];
+        frame.arguments[index] = value;
+        frame.instructionPointer += 2;
+        return true;
 	case 0x11: // ldloc.s
-		var index = methodData[frame.instructionPointer++] - 0x11;
+		var index = methodData[frame.instructionPointer + 1] - 0x11;
         var value = frame.locals[index];
         thread.stack.push(value);
-        frame.instructionPointer++;
+        frame.instructionPointer += 2;
         return true;
     case 0x0A: // stloc 0..3
     case 0x0B:
@@ -39,9 +53,9 @@ function ExecuteClrInstruction(thread) {
         return true;
 	case 0x13: // stloc.s
 		var value = thread.stack.pop();
-		var index = methodData[frame.instructionPointer++] - 0x13;
+		var index = methodData[frame.instructionPointer + 1];
         frame.locals[index] = value;
-        frame.instructionPointer++;
+        frame.instructionPointer += 2;
         return true;
     case 0x28: // call
         var token = readToken(methodData, frame.instructionPointer + 1);

@@ -61,7 +61,10 @@ function ThreadExecute() {
             frame.signature = CliSignatureParser.parseMethodDefSig(methodDefSignature.createReader());
             frame.state = 5; 
             frame.argumentsCount = getMethodArgumentsInStack(frame.signature);
-            
+            frame.arguments = new Array();
+            for (var n = frame.argumentsCount - 1; n >= 0; --n) {
+                frame.arguments[n] = this.stack.pop();
+            }
             if(frame.methodBody.localVarSigTok != undefined &&
                 frame.methodBody.localVarSigTok != 0) {
                 frame.locals = new Array();
@@ -89,7 +92,7 @@ function ThreadExecute() {
             result = true;
             break;
         case 4:
-             // native method execution loop
+            // native method execution loop
             result = frame.nativeCall.call(frame.executingAssembly.nativeLib, this);
             if(result) {
                 frame.state = 6;
@@ -100,9 +103,6 @@ function ThreadExecute() {
             result = ExecuteClrInstruction(this);			
 			break;
         case 6:
-            for(var i=0;i<frame.argumentsCount;++i) {
-                this.stack.pop();
-            }
             this.callStack.pop();
             result = true;
             break;
