@@ -7,15 +7,15 @@ function MscorlibAssembly() {
     this.types = {
         System$Console: {
             WriteLine$_0_1_1_14: function(thread) {
-                console.log(thread.stack[thread.stack.length - 1]);
+                console.log(thread.stack.pop());
                 return true;
             },
             WriteLine$_0_1_1_10: function(thread) {
-                console.log(thread.stack[thread.stack.length - 1]);
+                console.log(thread.stack.pop());
                 return true;
             },
             WriteLine$_0_1_1_8: function(thread) {
-                console.log(thread.stack[thread.stack.length - 1]);
+                console.log(thread.stack.pop());
                 return true;
             }
         }
