@@ -129,6 +129,7 @@ function ExecuteClrInstruction(thread) {
 	case 0x61: // xor
 		var b = thread.stack.pop();
 		var a = thread.stack.pop();
+        frame.instructionPointer++;
 
         if (typeof a == 'object') {
             /**
@@ -137,62 +138,61 @@ function ExecuteClrInstruction(thread) {
             switch(opcode) {
             case 0x5A: // mul
                 thread.stack.push(a.mul(b)); // NOTE: patched version required
-                break;
+                return true;
             case 0x5F: // and
                 thread.stack.push(a.and(b));
-                break;
+                return true;
             case 0x58: // add
                 thread.stack.push(a.add(b));
-                break;
+                return true;
             case 0x59: // sub
                 thread.stack.push(a.sub(b));
-                break;
+                return true;
             case 0x60: // or
                 thread.stack.push(a.or(b));
-                break;
+                return true;
             case 0x61: // xor
                 thread.stack.push(a.xor(b));
+                return true;
             };
         } else {
             switch(opcode) {
             case 0x5A: // mul
                 thread.stack.push(a * b);
-                break;
+                return true;
             case 0x5F: // and
                 thread.stack.push(a & b);
-                break;
+                return true;
             case 0x58: // add
                 thread.stack.push(a + b);
-                break;
+                return true;
             case 0x59: // sub
                 thread.stack.push(a - b);
-                break;
+                return true;
             case 0x60: // or
                 thread.stack.push(a | b);
-                break;
+                return true;
             case 0x61: // xor
                 thread.stack.push(a ^ b);
+                return true;
             };
         }
-        frame.instructionPointer++;
-        return true;
     case 0x65: // neg
     case 0x66: // not
     case 0x6A: // conv.i8
         var a = thread.stack.pop();
+        frame.instructionPointer++;
         switch(opcode) {
         case 0x65: // neg
             thread.stack.push(-a); // TODO: Int64 
-            break;
+            return true;
         case 0x66: // not
             thread.stack.push(~a); // TODO: Int64 
-            break;
+            return true;
         case 0x6A: // conv.i8
             thread.stack.push(new Int64(a)); 
-            break;
+            return true;
         }
-        frame.instructionPointer++;
-        return true;
     case 0x72: // ldstr (T)
         var stringToken = readToken(methodData, frame.instructionPointer + 1);
         frame.instructionPointer += 5;
