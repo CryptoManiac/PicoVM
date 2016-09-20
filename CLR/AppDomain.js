@@ -1,4 +1,5 @@
 const Assembly = require('./Assembly');
+const ThreadExecute = require('./ThreadExecute');
 const MscorlibAssembly = require('../FakeLib/MscorlibAssembly');
 
 function AppDomain(tickerInterval) {
@@ -23,7 +24,7 @@ function AppDomain(tickerInterval) {
     var index = 0;    
     
     function Reference() {
-        this.index = index++;                
+        this.index = index++;
     }
 
     Reference.prototype.initStruct = function() { this.value = new Struct(); };
@@ -48,7 +49,7 @@ function AppDomain(tickerInterval) {
             this.appDomain.threads = newThreads;
         }
     }
-    Thread.prototype.execute = require('./ThreadExecute');
+    Thread.prototype.execute = ThreadExecute;
     
     this.collectGarbage = function() {
         var i, j;    

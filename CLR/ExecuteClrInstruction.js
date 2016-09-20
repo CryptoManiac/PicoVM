@@ -57,15 +57,6 @@ function ExecuteClrInstruction(thread) {
         frame.locals[index] = value;
         frame.instructionPointer += 2;
         return true;
-    case 0x28: // call
-        var token = readToken(methodData, frame.instructionPointer + 1);
-        frame.instructionPointer += 5;
-        thread.callStack.push({callingAssembly:frame.executingAssembly, 
-            method:token.index | (token.table << 24), state:0});
-        return true;
-    case 0x2A: // ret
-        frame.state = 6;
-        return true;
 	case 0x14: // ldnull
 		thread.stack.push(null);
 		frame.instructionPointer++;
@@ -121,6 +112,67 @@ function ExecuteClrInstruction(thread) {
         thread.stack.pop();
 		frame.instructionPointer++;
 		return true;
+    case 0x28: // call
+        var token = readToken(methodData, frame.instructionPointer + 1);
+        frame.instructionPointer += 5;
+        thread.callStack.push({callingAssembly:frame.executingAssembly, 
+            method:token.index | (token.table << 24), state:0});
+        return true;
+    case 0x2A: // ret
+        frame.state = 6;
+        return true;
+    case 0x38: // br
+    case 0x39: // brnull
+    case 0x3C: // bge
+    case 0x3D: // bgt
+    case 0x3E: // ble
+    case 0x3F: // blt
+        console.log(thread.stack); // Under construction :)
+
+         var offset = ((methodData[frame.instructionPointer + 1]) | 
+                    (methodData[frame.instructionPointer + 2] << 8) | 
+                    (methodData[frame.instructionPointer + 3] << 16) | 
+                    (methodData[frame.instructionPointer + 4] << 24));
+        frame.instructionPointer+=5;
+        switch(opcode) {
+        case 0x38: // br
+            frame.instructionPointer += offset;
+            return true;
+        case 0x39: // brnull | brfalse
+            var a = thread.stack.pop();
+            if (!a) {
+                frame.instructionPointer += offset;
+            }
+            return true;
+        case 0x3C: // bge
+        case 0x3D: // bgt
+        case 0x3E: // ble
+        case 0x3F: // blt
+            var a = thread.stack.pop();
+            var b = thread.stack.pop();
+            switch(opcode) {
+            case 0x3C: // bge
+                if (b >= a) {
+                    frame.instructionPointer += offset;
+                }
+                return true;
+            case 0x3D: // bgt
+                if (b > a) {
+                    frame.instructionPointer += offset;
+                }
+                return true;
+            case 0x3E: // ble
+                if (b <= a) {
+                    frame.instructionPointer += offset;
+                }
+                return true;
+            }
+            case 0x3F: // blt
+                if (b < a) {
+                    frame.instructionPointer += offset;
+                }
+                return true;
+        };
 	case 0x5A: // mul
 	case 0x5F: // and
 	case 0x58: // add

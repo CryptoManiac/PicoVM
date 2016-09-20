@@ -25,8 +25,25 @@ namespace SimpleApp
         static void Main(string[] args)
         {
             // Plus1(22, 1, 2, 3);
+            long a = Plus1(22, 1, 2, 3);
+            //long a = 0;
 
-            Console.WriteLine(Plus1(22, 1, 2, 3));
+            for(int i = 0; i <= 10; ++i) {
+                Console.WriteLine(i);
+            }
+            
+            for(int i = 10; i >= 0; --i) {
+                Console.WriteLine(i);
+            }
+            
+            for(int i = 0; i < 10; ++i) {
+                Console.WriteLine(i);
+            }
+
+            for(int i = 10; i > 0; --i) {
+                Console.WriteLine(i);
+            }
+            Console.WriteLine(a);
         }
     }
 }
