@@ -3,14 +3,21 @@ const Int64 = require('int64-native');
 function ExecuteClrInstruction(thread) {
     var frame = thread.callStack[thread.callStack.length - 1];
     var methodData = frame.methodBody.data;
-
-    //console.log(thread.stack, frame.locals, frame.arguments);
     
     if(frame.instructionPointer >= methodData.length) {
         throw "End of method body";
     }
 
     var opcode = methodData[frame.instructionPointer];
+
+/*
+    console.log(
+        'opcode=0x' + opcode.toString(16), 
+        'location=0x' + frame.instructionPointer.toString(16), 
+        thread.stack, frame.locals
+    ); // Under construction :)
+*/
+
     switch(opcode) {
     case 0x00: // nop
         frame.instructionPointer++;
@@ -38,7 +45,8 @@ function ExecuteClrInstruction(thread) {
         frame.instructionPointer += 2;
         return true;
 	case 0x11: // ldloc.s
-		var index = methodData[frame.instructionPointer + 1] - 0x11;
+		var index = methodData[frame.instructionPointer + 1];
+        // console.log('ldloc.s ', index);
         var value = frame.locals[index];
         thread.stack.push(value);
         frame.instructionPointer += 2;
@@ -54,6 +62,7 @@ function ExecuteClrInstruction(thread) {
 	case 0x13: // stloc.s
 		var value = thread.stack.pop();
 		var index = methodData[frame.instructionPointer + 1];
+        // console.log('stloc.s ', index);
         frame.locals[index] = value;
         frame.instructionPointer += 2;
         return true;
@@ -127,8 +136,6 @@ function ExecuteClrInstruction(thread) {
     case 0x3D: // bgt
     case 0x3E: // ble
     case 0x3F: // blt
-        console.log(thread.stack); // Under construction :)
-
          var offset = ((methodData[frame.instructionPointer + 1]) | 
                     (methodData[frame.instructionPointer + 2] << 8) | 
                     (methodData[frame.instructionPointer + 3] << 16) | 
