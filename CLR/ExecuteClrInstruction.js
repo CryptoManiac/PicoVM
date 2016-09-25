@@ -223,6 +223,9 @@ function ExecuteClrInstruction(thread) {
         case 0x5F: // and
         case 0x60: // or
         case 0x61: // xor
+        case 0x62: // shl
+        case 0x63: // shr
+        case 0x64: // shr.un
             {
                 var b = thread.stack.pop();
                 var a = thread.stack.pop();
@@ -241,6 +244,9 @@ function ExecuteClrInstruction(thread) {
                         case 0x59: // sub
                         case 0x5D: // rem
                         case 0x5E: // rem.un
+                        case 0x62: // shl
+                        case 0x63: // shr
+                        case 0x64: // shr.un
                             {
                                 if (!a64) {
                                     // Reinitialize "a" variable as an instance of 64 bit integer class
@@ -255,12 +261,29 @@ function ExecuteClrInstruction(thread) {
                                         thread.stack.push(a.div(b));
                                         return true;
                                     case 0x5C: // div.un
-                                        throw "NYI"
+                                        var v1 = new UInt64(a.high32(), a.low32()); // cast to unsigned
+                                        var v2 = new UInt64(b.high32(), b.low32()); // cast to unsigned
+                                        thread.stack.push(v1.div(v2));
+                                        return true;
                                     case 0x5D: // rem
                                         thread.stack.push(a.mod(b));
                                         return true;
                                     case 0x5E: // rem.un
-                                        throw 'NYI';
+                                        var v1 = new UInt64(a.high32(), a.low32()); // cast to unsigned
+                                        var v2 = new UInt64(b.high32(), b.low32()); // cast to unsigned
+                                        thread.stack.push(v1.mid(v2));
+                                        return true;
+                                    case 0x62: // shl
+                                        thread.stack.push(a.shiftLeft(b));
+                                        return true;
+                                    case 0x63: // shr
+                                        var v = new Int64(a.high32(), a.low32()); // cast to signed
+                                        thread.stack.push(v.shiftRight(b));
+                                        return true;
+                                    case 0x64: // shr.un
+                                        var v = new UInt64(a.high32(), a.low32()); // cast to unsigned
+                                        thread.stack.push(v.shiftRight(b));
+                                        return true;
                                 }
                             };
                         case 0x58: // add
@@ -318,12 +341,25 @@ function ExecuteClrInstruction(thread) {
                         thread.stack.push(a / b >> 0);
                         return true;
                     case 0x5C: // div.un
-                        throw "NYI"
+                        var v = new Uint32Array([a, b]);
+                        thread.stack.push(v[0] / v[1] >> 0);
+                        return true;
                     case 0x5D: // rem
                         thread.stack.push(a % b);
                         return true;
                     case 0x5E: // rem.un
-                        throw 'NYI';
+                        var v = new Uint32Array([a, b]);
+                        thread.stack.push(v[0] % v[1]);
+                        return true;
+                    case 0x62: // shl
+                        thread.stack.push(a << b);
+                        return true;
+                    case 0x63: // shr
+                        thread.stack.push(a >> b);
+                        return true;
+                    case 0x64: // shr.un
+                        thread.stack.push(a >>> b);
+                        return true;
                 };
             };
         case 0x65: // neg

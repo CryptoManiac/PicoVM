@@ -6,7 +6,7 @@
 function MscorlibAssembly() {
     this.types = {
         System$Console: {
-            WriteLine$_0_1_1_14: function (thread) {
+            WriteLine$_0_1_1_8: function (thread) {
                 console.log(thread.stack.pop());
                 return true;
             },
@@ -14,7 +14,11 @@ function MscorlibAssembly() {
                 console.log(thread.stack.pop().toSignedDecimalString());
                 return true;
             },
-            WriteLine$_0_1_1_8: function (thread) {
+            WriteLine$_0_1_1_11: function (thread) {
+                console.log(thread.stack.pop().toUnsignedDecimalString());
+                return true;
+            },
+            WriteLine$_0_1_1_14: function (thread) {
                 console.log(thread.stack.pop());
                 return true;
             }
