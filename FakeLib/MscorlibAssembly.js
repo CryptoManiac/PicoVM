@@ -11,7 +11,7 @@ function MscorlibAssembly() {
                 return true;
             },
             WriteLine$_0_1_1_10: function(thread) {
-                console.log(thread.stack.pop());
+                console.log(thread.stack.pop().toSignedDecimalString());
                 return true;
             },
             WriteLine$_0_1_1_8: function(thread) {
