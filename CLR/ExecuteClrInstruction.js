@@ -128,6 +128,7 @@ function ExecuteClrInstruction(thread) {
         case 0x2A: // ret
             frame.state = 6;
             return true;
+
         case 0x38: // br
         case 0x39: // brnull
         case 0x3A: // brtrue
@@ -136,16 +137,41 @@ function ExecuteClrInstruction(thread) {
         case 0x3D: // bgt
         case 0x3E: // ble
         case 0x3F: // blt
+        case 0x40: // bne.un
         case 0x41: // bge.un
         case 0x42: // bgt.un
         case 0x43: // ble.un
         case 0x44: // blt.un
+
+        case 0x2B: // br.s
+        case 0x2C: // brnull.s
+        case 0x2D: // brtrue.s
+        case 0x2E: // beq.s
+        case 0x2F: // bge.s
+        case 0x30: // bgt.s
+        case 0x31: // ble.s
+        case 0x32: // blt.s
+        case 0x33: // bne.un.s
+        case 0x34: // bge.un.s
+        case 0x35: // bgt.un.s
+        case 0x36: // ble.un.s
+        case 0x37: // blt.un.s
             {
-                var offset = ((methodData[frame.instructionPointer + 1]) |
-                    (methodData[frame.instructionPointer + 2] << 8) |
-                    (methodData[frame.instructionPointer + 3] << 16) |
-                    (methodData[frame.instructionPointer + 4] << 24));
-                frame.instructionPointer += 5;
+                var offset;
+                
+                if (opcode >= 0x38 && opcode <= 0x44) {
+                    // Normal form
+                    offset = ((methodData[frame.instructionPointer + 1]) |
+                        (methodData[frame.instructionPointer + 2] << 8) |
+                        (methodData[frame.instructionPointer + 3] << 16) |
+                        (methodData[frame.instructionPointer + 4] << 24));
+                    frame.instructionPointer += 5;
+                } else {
+                    // Short form
+                    offset = methodData[frame.instructionPointer + 1];
+                    frame.instructionPointer += 2;
+                }
+
                 switch (opcode) {
                     case 0x38: // br
                         frame.instructionPointer += offset;
@@ -167,10 +193,22 @@ function ExecuteClrInstruction(thread) {
                     case 0x3D: // bgt
                     case 0x3E: // ble
                     case 0x3F: // blt
+                    case 0x40: // bne.un
                     case 0x41: // bge.un
                     case 0x42: // bgt.un
                     case 0x43: // ble.un
                     case 0x44: // blt.un
+
+                    case 0x2E: // beq.s
+                    case 0x2F: // bge.s
+                    case 0x30: // bgt.s
+                    case 0x31: // ble.s
+                    case 0x32: // blt.s
+                    case 0x33: // bne.un.s
+                    case 0x34: // bge.un.s
+                    case 0x35: // bgt.un.s
+                    case 0x36: // ble.un.s
+                    case 0x37: // blt.un.s
                         {
                             var a = thread.stack.pop();
                             var b = thread.stack.pop();
@@ -185,30 +223,45 @@ function ExecuteClrInstruction(thread) {
                                 }
 
                                 switch (opcode) {
+                                    case 0x2E: // beq.s
                                     case 0x3B: // beq
                                         if (!result) {
                                             frame.instructionPointer += offset;
                                         }
                                         return true;
+                                    case 0x33: // bne.un.s
+                                    case 0x40: // bne.un
+                                        if (result != 0) {
+                                            frame.instructionPointer += offset;
+                                            return true;
+                                        }
                                     case 0x3C: // bge
+                                    case 0x2F: // bge.s
                                     case 0x41: // bge.un
+                                    case 0x34: // bge.un.s
                                         if (result <= 0) {
                                             frame.instructionPointer += offset;
                                         }
                                         return true;
                                     case 0x3D: // bgt
+                                    case 0x30: // bgt.s
                                     case 0x42: // bgt.un
+                                    case 0x35: // bgt.un.s
                                         if (result < 0) {
                                             frame.instructionPointer += offset;
                                         }
                                         return true;
+                                    case 0x31: // ble.s
+                                    case 0x34: // bge.un.s
                                     case 0x3E: // ble
                                     case 0x43: // ble.un
                                         if (result >= 0) {
                                             frame.instructionPointer += offset;
                                         }
                                         return true;
+                                    case 0x32: // blt.s
                                     case 0x3F: // blt
+                                    case 0x37: // blt.un.s
                                     case 0x44: // blt.un
                                         if (result > 0) {
                                             frame.instructionPointer += offset;
@@ -219,34 +272,53 @@ function ExecuteClrInstruction(thread) {
                                 return true;
                             }
 
-                            if (opcode >= 0x41 && opcode <= 0x44) {
+                            if (opcode >= 0x41 && opcode <= 0x44 || opcode >= 0x34 && opcode <= 0x37) {
                                 a = a << 32 >>> 32;
                                 b = b << 32 >>> 32;
                             }
 
                             switch (opcode) {
+                                case 0x2E: // beq.s
                                 case 0x3B: // beq
                                     if (b == a) {
                                         frame.instructionPointer += offset;
                                     }
                                     return true;
+                                case 0x2F: // bge.s
+                                case 0x34: // bge.un.s
+                                case 0x41: // bge.un
                                 case 0x3C: // bge
                                     if (b >= a) {
                                         frame.instructionPointer += offset;
                                     }
                                     return true;
+                                case 0x30: // bgt.s
+                                case 0x35: // bgt.un.s
+                                case 0x42: // bgt.un
                                 case 0x3D: // bgt
                                     if (b > a) {
                                         frame.instructionPointer += offset;
                                     }
                                     return true;
+                                case 0x36: // ble.un.s
+                                case 0x43: // ble.un
+                                case 0x31: // ble.s
                                 case 0x3E: // ble
                                     if (b <= a) {
                                         frame.instructionPointer += offset;
                                     }
                                     return true;
+                                case 0x37: // blt.un.s
+                                case 0x44: // blt.un
+                                case 0x32: // blt.s
                                 case 0x3F: // blt
                                     if (b < a) {
+                                        frame.instructionPointer += offset;
+                                    }
+                                    return true;
+                                case 0x33: // bne.un.s
+                                case 0x40: // bne.un
+                                    if (b != a) {
                                         frame.instructionPointer += offset;
                                     }
                                     return true;
