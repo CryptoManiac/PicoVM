@@ -26,7 +26,7 @@ function readAssembly(path, callback) {
     var assemblyPath = 'appcode/' + path;
     fs.readFile(assemblyPath, function (status, data) {
         if (status) {
-            callback(undefined);
+            throw status;
         }
         parseAssemblyData(data, callback);
     });
