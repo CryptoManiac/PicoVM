@@ -28,7 +28,7 @@ function AppDomain(tickerInterval) {
     }
 
     Reference.prototype.initStruct = function () { this.value = new Struct(); };
-    Reference.prototype.initArray = function () { this.value = new Array(); };
+    Reference.prototype.initArray = function (arraySize) { this.value = new Array(arraySize); };
 
     this.threads = new Array();
     var currentThreadIndex = 0;

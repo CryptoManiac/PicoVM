@@ -3,6 +3,7 @@ const UInt64 = require('int64-native').UInt64;
 
 function ExecuteClrInstruction(thread) {
     var frame = thread.callStack[thread.callStack.length - 1];
+    var appDomain = frame.executingAssembly.appDomain;
     var methodData = frame.methodBody.data;
 
     if (frame.instructionPointer >= methodData.length) {
@@ -607,7 +608,104 @@ function ExecuteClrInstruction(thread) {
             var str = readUS(stringToken.index);
             thread.stack.push(str);
             return true;
+        case 0x8D: // newarr
+            var arraySize = thread.stack.pop();
+            var array = appDomain.createObject();
+            array.initArray(arraySize);
+            thread.stack.push(array.index);
+            frame.instructionPointer += 5;
+            return true;
+        case 0x8E: // ldlen
+            var arrayIndex = thread.stack.pop();
+            var array;
+            for (var n = 0; n < appDomain.heap.length; ++n) {
+                if (appDomain.heap[n].index == arrayIndex) {
+                    array = appDomain.heap[n];
+                    break;
+                }
+            }
+
+            thread.stack.push(array.value.length);
+            frame.instructionPointer += 1;
+            return true;
+        case 0x9C: // stelem.i1
+        case 0x9D: // stelem.i2
+        case 0x9E: // stelem.i4
+        case 0x9F: // stelem.i8
+            var value = thread.stack.pop();
+            var elementIndex = thread.stack.pop();
+            var arrayIndex = thread.stack.pop();
+            var array;
+            for (var n = 0; n < appDomain.heap.length; ++n) {
+                if (appDomain.heap[n].index == arrayIndex) {
+                    array = appDomain.heap[n];
+                    break;
+                }
+            }
+
+            switch(opcode) {
+                case 0x9C: // stelem.i1
+                    array.value[elementIndex] = value & 0x000000ff;
+                    frame.instructionPointer += 1;
+                    return true;
+                case 0x9D: // stelem.i2
+                    array.value[elementIndex] = value & 0x0000ffff;
+                    frame.instructionPointer += 1;
+                    return true;
+                case 0x9E: // stelem.i4
+                    array.value[elementIndex] = value & 0xffffffff;
+                    frame.instructionPointer += 1;
+                    return true;
+                case 0x9F: // stelem.i8
+                    array.value[elementIndex] = new Int64(value);
+                    frame.instructionPointer += 1;
+                    return true;
+            };
+        
+        case 0x90: // ldelem.i1
+        case 0x92: // ldelem.i2
+        case 0x94: // ldelem.i4
+        case 0x96: // ldelem.i8
+            {
+                var elementIndex = thread.stack.pop();
+                var arrayIndex = thread.stack.pop();
+                var array;
+                for (var n = 0; n < appDomain.heap.length; ++n) {
+                    if (appDomain.heap[n].index == arrayIndex) {
+                        array = appDomain.heap[n];
+                        break;
+                    }
+                }
+
+                switch(opcode) {
+                    case 0x90: // ldelem.i1
+                        thread.stack.push(array.value[elementIndex] & 0x000000ff)
+                        frame.instructionPointer += 1;
+                        return true;
+                    case 0x92: // ldelem.i2
+                        thread.stack.push(array.value[elementIndex] & 0x0000ffff)
+                        frame.instructionPointer += 1;
+                        return true;
+                    case 0x94: // ldelem.i4
+                        thread.stack.push(array.value[elementIndex] & 0xffffffff)
+                        frame.instructionPointer += 1;
+                        return true;
+                    case 0x96: // ldelem.i8
+                        var value = array.value[elementIndex];
+                        if (value.constructor != Int64) {
+                            value = new Int64(value);
+                        }
+                        thread.stack.push(value);
+                        frame.instructionPointer += 1;
+                        return true;
+                }
+            };
         default:
+            console.log(
+                'opcode=0x' + opcode.toString(16), 
+                'location=0x' + frame.instructionPointer.toString(16), 
+                thread.stack, frame.locals
+            ); // Under construction :)
             throw "Unknown instruction:" + opcode.toString(16);
     }
 

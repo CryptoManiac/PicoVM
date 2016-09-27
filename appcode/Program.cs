@@ -12,47 +12,15 @@ namespace SimpleApp
     {
         static void Main(string[] args)
         {
-/*
-			string message = "Hello, world!";
-            Console.WriteLine(message);
-*/
+	    int[] nArr = new int[10];
 
-/*
-			int a = -1;
-			int b = 2;
-			int c = 3;
-			int d = 8;
-			
-			int e = (a + b) * c - d;
+	    for(int n = 0; n < nArr.Length; ++n) {
+		nArr[n] = n;
+	    }
 
-			Console.WriteLine(e);
-
-            a = 4;
-            b = 2;
-            c = 6;
-            d = -8;
-
-            e = (a + c) * d - b;
-
-			Console.WriteLine(e);
-
-            a = -250000;
-            d = 1;
-            e = (a - c) * d - b;
-
-			Console.WriteLine(e);           
-
-            long f = 0xefffffffff;
-
-            f = f + e;
-*/
-
-            long f = 0xefffffffff;
-            int e = 11;
-
-            f = f * e;
-
-            Console.WriteLine(f);
+	    for(int n = 0; n < nArr.Length; ++n) {
+		Console.WriteLine(nArr[n]);
+	    }
         }
     }
 }
