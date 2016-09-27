@@ -10,6 +10,10 @@ function MscorlibAssembly() {
                 console.log(thread.stack.pop());
                 return true;
             },
+            WriteLine$_0_1_1_9: function (thread) {
+                console.log(thread.stack.pop());
+                return true;
+            },
             WriteLine$_0_1_1_10: function (thread) {
                 console.log(thread.stack.pop().toSignedDecimalString());
                 return true;
