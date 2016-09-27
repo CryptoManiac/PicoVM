@@ -556,6 +556,51 @@ function ExecuteClrInstruction(thread) {
                     thread.stack.push(new Int64(a << 32 >>> 32));
                     return true;
             }
+        case 0xfe:
+            {
+                var suffix = methodData[frame.instructionPointer + 1];
+                switch(suffix) {
+                    case 0x01: // ceq
+                        var v2 = thread.stack.pop();
+                        var v1 = thread.stack.pop();
+
+                        if ((v2_64 = v2.constructor == Int64) || (v1_64 = v1.constructor == Int64)) {
+                            thread.stack.push(~~!!(v1.compare(v2) == 0));
+                            frame.instructionPointer += 2;
+                            return true;
+                        }
+
+                        thread.stack.push(~~!!(v1 == v2));
+                        frame.instructionPointer += 2;
+                        return true;
+                    case 0x02: // cgt
+                        var v2 = thread.stack.pop();
+                        var v1 = thread.stack.pop();
+
+                        if ((v2_64 = v2.constructor == Int64) || (v1_64 = v1.constructor == Int64)) {
+                            thread.stack.push(~~!!(v1.compare(v2) > 0));
+                            frame.instructionPointer += 2;
+                            return true;
+                        }
+
+                        thread.stack.push(~~!!(v1 > v2));
+                        frame.instructionPointer += 2;
+                        return true;
+                    case 0x03: // cgt.un
+                        var v2 = thread.stack.pop();
+                        var v1 = thread.stack.pop();
+
+                        if ((v2_64 = v2.constructor == Int64) || (v1_64 = v1.constructor == Int64)) {
+                            thread.stack.push(~~!!(v1.compare_un(v2) > 0));
+                            frame.instructionPointer += 2;
+                            return true;
+                        }
+
+                        thread.stack.push(~~!!((v1 << 32 >>> 32) > (v2 << 32 >>> 32)));
+                        frame.instructionPointer += 2;
+                        return true;                        
+                }
+            };
         case 0x72: // ldstr (T)
             var stringToken = readToken(methodData, frame.instructionPointer + 1);
             frame.instructionPointer += 5;
