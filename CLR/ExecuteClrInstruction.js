@@ -113,6 +113,12 @@ function ExecuteClrInstruction(thread) {
                 frame.instructionPointer += 9;
                 return true;
             };
+        case 0x25: // dup
+            var value = thread.stack.pop();
+            thread.stack.push(value);
+            thread.stack.push(value);
+            frame.instructionPointer++;
+            return true;
         case 0x26: // pop
             thread.stack.pop();
             frame.instructionPointer++;
