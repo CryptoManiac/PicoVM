@@ -130,10 +130,16 @@ function ExecuteClrInstruction(thread) {
             return true;
         case 0x38: // br
         case 0x39: // brnull
+        case 0x3A: // brtrue
+        case 0x3B: // beq
         case 0x3C: // bge
         case 0x3D: // bgt
         case 0x3E: // ble
         case 0x3F: // blt
+        case 0x41: // bge.un
+        case 0x42: // bgt.un
+        case 0x43: // ble.un
+        case 0x44: // blt.un
             {
                 var offset = ((methodData[frame.instructionPointer + 1]) |
                     (methodData[frame.instructionPointer + 2] << 8) |
@@ -150,35 +156,60 @@ function ExecuteClrInstruction(thread) {
                             frame.instructionPointer += offset;
                         }
                         return true;
+                    case 0x3A: // brue
+                        var a = thread.stack.pop();
+                        if (a) {
+                            frame.instructionPointer += offset;
+                        }
+                        return true;
+                    case 0x3B: // beq
                     case 0x3C: // bge
                     case 0x3D: // bgt
                     case 0x3E: // ble
                     case 0x3F: // blt
+                    case 0x41: // bge.un
+                    case 0x42: // bgt.un
+                    case 0x43: // ble.un
+                    case 0x44: // blt.un
                         {
                             var a = thread.stack.pop();
                             var b = thread.stack.pop();
 
                             var a64, b64;
-                            if ((a64 = [Int64, UInt64].some(fnc => a.constructor == fnc)) || (b64 = [Int64, UInt64].some(fnc => b.constructor == fnc))) {
-                                var result = a64 ? a.compare(b) : -(b.compare(a));
+                            if ((a64 = a.constructor == Int64) || (b64 = b.constructor == Int64)) {
+                                var result;
+                                if (opcode >= 0x3B && opcode <= 0x3F) {
+                                    result = a64 ? a.compare(b) : -(b.compare(a));
+                                } else {
+                                    result = a64 ? a.compare_un(b) : -(b.compare_un(a));
+                                }
 
                                 switch (opcode) {
+                                    case 0x3B: // beq
+                                        if (!result) {
+                                            frame.instructionPointer += offset;
+                                        }
+                                        return true;
                                     case 0x3C: // bge
-                                        if (!result || result < 0) {
+                                    case 0x41: // bge.un
+                                        if (result <= 0) {
                                             frame.instructionPointer += offset;
                                         }
                                         return true;
                                     case 0x3D: // bgt
+                                    case 0x42: // bgt.un
                                         if (result < 0) {
                                             frame.instructionPointer += offset;
                                         }
                                         return true;
                                     case 0x3E: // ble
-                                        if (!result || result > 0) {
+                                    case 0x43: // ble.un
+                                        if (result >= 0) {
                                             frame.instructionPointer += offset;
                                         }
                                         return true;
                                     case 0x3F: // blt
+                                    case 0x44: // blt.un
                                         if (result > 0) {
                                             frame.instructionPointer += offset;
                                         }
@@ -188,7 +219,17 @@ function ExecuteClrInstruction(thread) {
                                 return true;
                             }
 
+                            if (opcode >= 0x41 && opcode <= 0x44) {
+                                a = a << 32 >>> 32;
+                                b = b << 32 >>> 32;
+                            }
+
                             switch (opcode) {
+                                case 0x3B: // beq
+                                    if (b == a) {
+                                        frame.instructionPointer += offset;
+                                    }
+                                    return true;
                                 case 0x3C: // bge
                                     if (b >= a) {
                                         frame.instructionPointer += offset;
@@ -232,7 +273,7 @@ function ExecuteClrInstruction(thread) {
                 frame.instructionPointer++;
 
                 var a64, b64;
-                if ((a64 = [Int64, UInt64].some(fnc => a.constructor == fnc)) || (b64 = [Int64, UInt64].some(fnc => b.constructor == fnc))) {
+                if ((a64 = a.constructor == Int64) || (b64 = b.constructor == Int64)) {
                     /**
                      * int64-native workaround for 64 bit integers.
                      */
@@ -241,16 +282,16 @@ function ExecuteClrInstruction(thread) {
                         case 0x5B: // div
                         case 0x5C: // div.un
                         case 0x5D: // rem
+                        case 0x5E: // rem.un
                         case 0x59: // sub
                         case 0x5D: // rem
-                        case 0x5E: // rem.un
                         case 0x62: // shl
                         case 0x63: // shr
                         case 0x64: // shr.un
                             {
                                 if (!a64) {
                                     // Reinitialize "a" variable as an instance of 64 bit integer class
-                                    a = new b.constructor(a);
+                                    a = new Int64(a);
                                 }
 
                                 switch (opcode) {
@@ -261,28 +302,22 @@ function ExecuteClrInstruction(thread) {
                                         thread.stack.push(a.div(b));
                                         return true;
                                     case 0x5C: // div.un
-                                        var v1 = new UInt64(a.high32(), a.low32()); // cast to unsigned
-                                        var v2 = new UInt64(b.high32(), b.low32()); // cast to unsigned
-                                        thread.stack.push(v1.div(v2));
+                                        thread.stack.push(a.div_un(b));
                                         return true;
                                     case 0x5D: // rem
                                         thread.stack.push(a.mod(b));
                                         return true;
                                     case 0x5E: // rem.un
-                                        var v1 = new UInt64(a.high32(), a.low32()); // cast to unsigned
-                                        var v2 = new UInt64(b.high32(), b.low32()); // cast to unsigned
-                                        thread.stack.push(v1.mid(v2));
+                                        thread.stack.push(a.mod_un(b));
                                         return true;
                                     case 0x62: // shl
                                         thread.stack.push(a.shiftLeft(b));
                                         return true;
                                     case 0x63: // shr
-                                        var v = new Int64(a.high32(), a.low32()); // cast to signed
-                                        thread.stack.push(v.shiftRight(b));
+                                        thread.stack.push(a.shiftRight(b));
                                         return true;
                                     case 0x64: // shr.un
-                                        var v = new UInt64(a.high32(), a.low32()); // cast to unsigned
-                                        thread.stack.push(v.shiftRight(b));
+                                        thread.stack.push(a.unsignedShiftRight(b));
                                         return true;
                                 }
                             };
@@ -368,11 +403,15 @@ function ExecuteClrInstruction(thread) {
         case 0x68: // conv.i2
         case 0x69: // conv.i4
         case 0x6A: // conv.i8
+        case 0xD2: // conv.u1
+        case 0xD1: // conv.u2
+        case 0x6D: // conv.u4
+        case 0x6E: // conv.u8
             //console.log('offset=' + frame.instructionPointer.toString(16), opcode.toString(16), thread.stack);
 
             var a = thread.stack.pop();
             frame.instructionPointer++;
-            if ([Int64, UInt64].some(fnc => a.constructor == fnc)) {
+            if (a.constructor == Int64) {
                 switch (opcode) {
                     case 0x65: // neg
                         thread.stack.push(a.neg());
@@ -381,15 +420,27 @@ function ExecuteClrInstruction(thread) {
                         thread.stack.push(a.not());
                         return true;
                     case 0x67: // conv.i1
-                        thread.stack.push(a.low32() && 0x000000ff);
+                        thread.stack.push((a.low32() && 0x000000ff) << 24 >> 24);
                         return true;
                     case 0x68: // conv.i2
-                        thread.stack.push(a.low32() && 0x0000ffff);
+                        thread.stack.push((a.low32() && 0x0000ffff) << 16 >> 16);
                         return true;
                     case 0x69: // conv.i4
-                        thread.stack.push(a.low32());
+                        thread.stack.push(a.low32() << 32 >> 32);
                         return true;
                     case 0x6A: // conv.i8
+                        thread.stack.push(a);
+                        return true;
+                    case 0xD2: // conv.u1
+                        thread.stack.push((a.low32() && 0x000000ff) << 24 >>> 24);
+                        return true;
+                    case 0xD1: // conv.u2
+                        thread.stack.push((a.low32() && 0x0000ffff) << 16 >>> 16);
+                        return true;
+                    case 0x6D: // conv.u4
+                        thread.stack.push(a.low32() << 32 >>> 32);
+                        return true;
+                    case 0x6E: // conv.u8
                         thread.stack.push(a);
                         return true;
                 }
@@ -413,6 +464,18 @@ function ExecuteClrInstruction(thread) {
                     return true;
                 case 0x6A: // conv.i8
                     thread.stack.push(new Int64(a));
+                    return true;
+                case 0xD2: // conv.u1
+                    thread.stack.push((a && 0x000000ff) << 24 >>> 24);
+                    return true;
+                case 0xD1: // conv.u2
+                    thread.stack.push((a && 0x0000ffff) << 16 >>> 16);
+                    return true;
+                case 0x6D: // conv.u4
+                    thread.stack.push(a << 32 >>> 32);
+                    return true;
+                case 0x6E: // conv.u8
+                    thread.stack.push(new Int64(a << 32 >>> 32));
                     return true;
             }
         case 0x72: // ldstr (T)
