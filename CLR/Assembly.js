@@ -16,6 +16,7 @@ function InitAssembly(appDomain, name, clrData) {
             var thread = appDomain.createThread();
             thread.stack.push(args);
             thread.callStack.push(callFrame);
+            process.nextTick(appDomain.ticker);
         }
         else
             throw "Invalid entry point token";

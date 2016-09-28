@@ -124,10 +124,14 @@ function AppDomain(tickerInterval) {
     }
 
     var thisClr = this;
-    setInterval(
-        function () { AppDomain_tick.call(thisClr); },
-        tickerInterval
-    );
+
+    this.ticker = function () {
+        AppDomain_tick.call(thisClr);
+
+        if (thisClr.threads.length) {
+            process.nextTick(arguments.callee);
+        }
+    }
 
     function AppDomain_tick() {
         if (this.threads.length > 0) {
