@@ -2,9 +2,7 @@ const Assembly = require('./Assembly');
 const ThreadExecute = require('./ThreadExecute');
 const MscorlibAssembly = require('../FakeLib/MscorlibAssembly');
 
-function AppDomain(tickerInterval) {
-    tickerInterval = tickerInterval || 1;
-
+function AppDomain() {
     var currentAppDomain = this;
 
     this.createThread = function () {
