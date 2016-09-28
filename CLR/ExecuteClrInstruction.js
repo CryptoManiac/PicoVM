@@ -455,15 +455,17 @@ function ExecuteClrInstruction(thread) {
                         thread.stack.push(a / b >> 0);
                         return true;
                     case 0x5C: // div.un
-                        var v = new Uint32Array([a, b]);
-                        thread.stack.push(v[0] / v[1] >> 0);
+                        a = a << 32 >>> 32;
+                        b = b << 32 >>> 32;
+                        thread.stack.push(a / b >> 0);
                         return true;
                     case 0x5D: // rem
                         thread.stack.push(a % b);
                         return true;
                     case 0x5E: // rem.un
-                        var v = new Uint32Array([a, b]);
-                        thread.stack.push(v[0] % v[1]);
+                        a = a << 32 >>> 32;
+                        b = b << 32 >>> 32;
+                        thread.stack.push(a % b);
                         return true;
                     case 0x62: // shl
                         thread.stack.push(a << b);

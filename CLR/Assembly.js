@@ -701,10 +701,7 @@ function readAssembly(path, callback) {
     }
 
     function readBytes(data, offset, length) {
-        var buffer = [];
-        for (var i = 0; i < length; ++i)
-            buffer.push(data[offset + i]);
-        return buffer;
+        return data.slice(offset, offset + length);
     }
 
     function read16bit(data, offset) {
