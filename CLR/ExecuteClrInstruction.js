@@ -12,13 +12,13 @@ function ExecuteClrInstruction(thread) {
 
     var opcode = methodData[frame.instructionPointer];
 
-    /*
+/*
         console.log(
             'opcode=0x' + opcode.toString(16), 
             'location=0x' + frame.instructionPointer.toString(16), 
-            thread.stack, frame.locals
+            thread.stack, appDomain.heap // frame.locals
         ); // Under construction :)
-    */
+*/
 
     switch (opcode) {
         case 0x00: // nop
@@ -499,10 +499,10 @@ function ExecuteClrInstruction(thread) {
                         thread.stack.push(a.not());
                         return true;
                     case 0x67: // conv.i1
-                        thread.stack.push((a.low32() && 0x000000ff) << 24 >> 24);
+                        thread.stack.push((a.low32() & 0x000000ff) << 24 >> 24);
                         return true;
                     case 0x68: // conv.i2
-                        thread.stack.push((a.low32() && 0x0000ffff) << 16 >> 16);
+                        thread.stack.push((a.low32() & 0x0000ffff) << 16 >> 16);
                         return true;
                     case 0x69: // conv.i4
                         thread.stack.push(a.low32() << 32 >> 32);
@@ -511,10 +511,10 @@ function ExecuteClrInstruction(thread) {
                         thread.stack.push(a);
                         return true;
                     case 0xD2: // conv.u1
-                        thread.stack.push((a.low32() && 0x000000ff) << 24 >>> 24);
+                        thread.stack.push((a.low32() & 0x000000ff) << 24 >>> 24);
                         return true;
                     case 0xD1: // conv.u2
-                        thread.stack.push((a.low32() && 0x0000ffff) << 16 >>> 16);
+                        thread.stack.push((a.low32() & 0x0000ffff) << 16 >>> 16);
                         return true;
                     case 0x6D: // conv.u4
                         thread.stack.push(a.low32() << 32 >>> 32);
@@ -545,10 +545,10 @@ function ExecuteClrInstruction(thread) {
                     thread.stack.push(new Int64(a));
                     return true;
                 case 0xD2: // conv.u1
-                    thread.stack.push((a && 0x000000ff) << 24 >>> 24);
+                    thread.stack.push((a & 0x000000ff) << 24 >>> 24);
                     return true;
                 case 0xD1: // conv.u2
-                    thread.stack.push((a && 0x0000ffff) << 16 >>> 16);
+                    thread.stack.push((a & 0x0000ffff) << 16 >>> 16);
                     return true;
                 case 0x6D: // conv.u4
                     thread.stack.push(a << 32 >>> 32);
@@ -654,7 +654,10 @@ function ExecuteClrInstruction(thread) {
                     array.value[elementIndex] = value & 0xffffffff;
                     break;
                 case 0x9F: // stelem.i8
-                    array.value[elementIndex] = new Int64(value);
+                    if (value.constructor != Int64) {
+                        value = new Int64(value);
+                    }
+                    array.value[elementIndex] = value;
                     break;
             };
 
