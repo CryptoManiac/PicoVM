@@ -17,16 +17,6 @@ class FibLoop
         for (uint i = 2; i < n; ++i)
         {
             uint temp = fibo;
-
-            Console.WriteLine("N:");
-            Console.WriteLine(n);
-
-            Console.WriteLine("Itetation:");
-            Console.WriteLine(i);
-
-            Console.WriteLine("TEMP:");
-            Console.WriteLine(temp);
-
             fibo += fiboPrev;
             fiboPrev = temp;
         }
