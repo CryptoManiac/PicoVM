@@ -64,7 +64,7 @@ function ThreadExecute() {
                 frame.arguments = this.stack.splice(this.stack.length - frame.argumentsCount, frame.argumentsCount);
                 if (frame.methodBody.localVarSigTok != undefined &&
                     frame.methodBody.localVarSigTok != 0) {
-                    frame.locals = new Array();
+                    frame.locals = [];
                 }
                 result = true;
                 break;

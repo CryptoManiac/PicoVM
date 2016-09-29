@@ -11,7 +11,7 @@ function AppDomain() {
         return thread;
     }
 
-    this.heap = new Array();
+    this.heap = [];
 
     this.createObject = function () {
         var obj = new Reference();
@@ -28,7 +28,7 @@ function AppDomain() {
     Reference.prototype.initStruct = function () { this.value = new Struct(); };
     Reference.prototype.initArray = function (arraySize) { this.value = new Array(arraySize); };
 
-    this.threads = new Array();
+    this.threads = [];
     var currentThreadIndex = 0;
 
     function Thread(appDomain) {
@@ -107,8 +107,8 @@ function AppDomain() {
             }
         }
 
-        var newHeap = new Array();
-        var finalizables = new Array();
+        var newHeap = [];
+        var finalizables = [];
         for (i = 0; i < this.heap.length; ++i) {
             if (this.heap[i].used)
                 newHeap.push(this.heap[i]);
@@ -153,7 +153,7 @@ function AppDomain() {
         }
     };
 
-    this.assemblies = new Object();
+    this.assemblies = {};
     this.loadAssembly = function (name, callback) {
         var currentDomain = this;
         var lowerName = name.toLowerCase();

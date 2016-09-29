@@ -13,7 +13,7 @@ class Fib
 
 	static void Main(string[] args)
 	{
-		for (long n = 0; n <= 20; ++n) {
+		for (long n = 0; n <= 50; ++n) {
 		    Console.WriteLine(fib(n));
 		}
 	}

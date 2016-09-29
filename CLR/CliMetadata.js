@@ -53,7 +53,7 @@ var CliElementTypes = [
 
 var CliSignatureParser = {
     parseMethodDefSig: function (reader) {
-        var signature = new Object();
+        var signature = {};
         if (reader.peek() == 0x20) {
             signature.HASTHIS = true;
             reader.read();
@@ -89,7 +89,7 @@ var CliSignatureParser = {
         }
         signature.ParamCount = reader.read();
         signature.RetType = this.parseRetType(reader);
-        signature.Params = new Array();
+        signature.Params = [];
         for (var i = 0; i < signature.ParamCount; ++i) {
             if (reader.peek() == 0x41) {
                 signature.SENTINEL = true;
@@ -105,9 +105,9 @@ var CliSignatureParser = {
         if (reader.read() != 0x06) {
             throw "Invalid field sig";
         }
-        var signature = new Object();
+        var signature = {};
         signature.FIELD = true;
-        signature.CustomMods = new Array();
+        signature.CustomMods = [];
         var customMod;
         while ((customMod = this.parseCustomMod(reader)) != undefined) {
             signature.CustomMods.push(customMod);
@@ -125,17 +125,17 @@ var CliSignatureParser = {
             default:
                 throw "Invalid property signature";
         }
-        var signature = new Object();
+        var signature = {};
         signature.PROPERTY = true;
         if (hasThis) signature.THIS = true;
         signature.ParamCount = reader.read();
-        signature.CustomMods = new Array();
+        signature.CustomMods = [];
         var customMod;
         while ((customMod = this.parseCustomMod(reader)) != undefined) {
             signature.CustomMods.push(customMod);
         }
         signature.Type = this.parseType(reader);
-        signature.Params = new Array();
+        signature.Params = [];
         for (var i = 0; i < signature.ParamCount; ++i) {
             var param = this.parseParam(reader);
             signature.Params.push(param);
@@ -146,17 +146,17 @@ var CliSignatureParser = {
         if (reader.read() != 0x07) {
             throw "Invalid local signature";
         }
-        var signature = new Object();
+        var signature = {};
         signature.LOCAL_SIG = true;
         signature.Count = reader.read();
-        signature.Locals = new Array();
+        signature.Locals = [];
         for (var i = 0; i < signature.Count; ++i) {
-            var local = new Object();
+            var local = {};
             if (reader.peek() == 0x16) {
                 local.TYPEDBYREF = true;
                 reader.read();
             } else {
-                local.CustomModsAndConstaints = new Array();
+                local.CustomModsAndConstaints = [];
                 var customMod = this.parseCustomMod(reader);
                 var constraint = this.parseConstraint(reader);
                 while (customMod != undefined || constraint != undefined) {
@@ -192,15 +192,15 @@ var CliSignatureParser = {
     },
     parseConstraint: function (reader) {
         if (reader.peek() == 0x45) {
-            var signature = new Object();
+            var signature = {};
             signature.PINNED = true;
             return signature;
         } else
             return undefined;
     },
     parseParam: function (reader) {
-        var signature = new Object();
-        signature.CustomMods = new Array();
+        var signature = {};
+        signature.CustomMods = [];
         var customMod;
         while ((customMod = this.parseCustomMod(reader)) != undefined) {
             signature.CustomMods.push(customMod);
@@ -218,8 +218,8 @@ var CliSignatureParser = {
         return signature;
     },
     parseRetType: function (reader) {
-        var signature = new Object();
-        signature.CustomMods = new Array();
+        var signature = {};
+        signature.CustomMods = [];
         var customMod;
         while ((customMod = this.parseCustomMod(reader)) != undefined) {
             signature.CustomMods.push(customMod);
@@ -242,7 +242,7 @@ var CliSignatureParser = {
     },
     parseType: function (reader) {
         var typeId = reader.read();
-        var signature = new Object();
+        var signature = {};
         signature.TypeId = typeId;
         signature.TypeName = CliElementTypes[typeId];
         if (typeId >= 0x02 && typeId <= 0x0d ||
@@ -250,7 +250,7 @@ var CliSignatureParser = {
             typeId == 0x0e || typeId == 0x1c) {
             // BOOLEAN | CHAR | I1 | U1 | I2 | U2 | I4 | U4 | I8 | U8 | R4 | R8 | I | U
             // STRING
-            // OBJECT            
+            // OBJECT
         } else if (typeId == 0x14) {
             // ARRAY Type ArrayShape
             signature.ArrayType = this.parseType(reader);
@@ -270,7 +270,7 @@ var CliSignatureParser = {
                 signature.VALUETYPE = true;
             signature.TypeDefOrRef = this.parseTypeDefOrRef(reader);
             signature.GenArgCount = reader.read();
-            signature.GenArgTypes = new Array();
+            signature.GenArgTypes = [];
             for (var i = 0; i < signature.GenArgCount; ++i) {
                 var type = this.parseType(reader);
                 signature.GenArgTypes.push(type);
@@ -281,7 +281,7 @@ var CliSignatureParser = {
         } else if (typeId == 0x0f || typeId == 0x1d) {
             // PTR *CustomMod (Type | VOID)
             // SZARRAY CustomMod* Type
-            signature.CustomMods = new Array();
+            signature.CustomMods = [];
             var customMod;
             while ((customMod = this.parseCustomMod(reader)) != undefined) {
                 signature.CustomMods.push(customMod);
@@ -302,15 +302,15 @@ var CliSignatureParser = {
         return signature;
     },
     parseArrayShape: function (reader) {
-        var signature = new Object();
+        var signature = {};
         signature.Rank = reader.read();
         signature.NumSizes = reader.read();
-        signature.Sizes = new Array();
+        signature.Sizes = [];
         for (var i = 0; i < signature.NumSizes; ++i) {
             signature.Sizes.push(reader.read());
         }
         signature.NumLoBounds = reader.read();
-        signature.LoBounds = new Array();
+        signature.LoBounds = [];
         for (var i = 0; i < signature.NumLoBounds; ++i) {
             signature.LoBounds.push(reader.read());
         }
