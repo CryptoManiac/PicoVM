@@ -600,6 +600,32 @@ function ExecuteClrInstruction(thread) {
 
                         thread.stack.push(~~!!((v1 << 32 >>> 32) > (v2 << 32 >>> 32)));
                         break;
+                    case 0x04: // clt
+                        var v2 = thread.stack.pop();
+                        var v1 = thread.stack.pop();
+
+                        if ((v2_64 = v2.constructor == Int64) || (v1_64 = v1.constructor == Int64)) {
+                            thread.stack.push(~~!!(v1.compare(v2) < 0));
+                            frame.instructionPointer += 2;
+                            return true;
+                        }
+
+                        thread.stack.push(~~!!(v1 < v2));
+                        break;
+                    case 0x05: // clt.un
+                        var v2 = thread.stack.pop();
+                        var v1 = thread.stack.pop();
+
+                        if ((v2_64 = v2.constructor == Int64) || (v1_64 = v1.constructor == Int64)) {
+                            thread.stack.push(~~!!(v1.compare_un(v2) < 0));
+                            frame.instructionPointer += 2;
+                            return true;
+                        }
+
+                        thread.stack.push(~~!!((v1 << 32 >>> 32) < (v2 << 32 >>> 32)));
+                        break;
+                    default:
+                        throw "Unknown instruction: 0xfe 0x" + suffix.toString(16);
                 }
 
                 frame.instructionPointer += 2;
