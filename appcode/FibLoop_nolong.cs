@@ -1,4 +1,3 @@
-
 /**
  * Very, very, very simple testing program.
  */
@@ -7,17 +6,17 @@ using System;
 
 class FibLoop
 {
-    static long fib(long n)
+    static uint fib(uint n)
     {
         if (n <= 1)
             return n;
 
-        long fibo = 1;
-        long fiboPrev = 1;
+        uint fibo = 1;
+        uint fiboPrev = 1;
 
-        for (long i = 2; i < n; ++i)
+        for (uint i = 2; i < n; ++i)
         {
-            long temp = fibo;
+            uint temp = fibo;
             fibo += fiboPrev;
             fiboPrev = temp;
         }
@@ -27,7 +26,7 @@ class FibLoop
 
     static void Main(string[] args)
     {
-        for (long n = 0; n <= 35; ++n)
+        for (uint n = 0; n <= 45; ++n)
         {
             Console.WriteLine(fib(n));
         }

@@ -48,7 +48,6 @@ function ExecuteClrInstruction(thread) {
             return true;
         case 0x11: // ldloc.s
             var index = methodData[frame.instructionPointer + 1];
-            // console.log('ldloc.s ', index);
             var value = frame.locals[index];
             thread.stack.push(value);
             frame.instructionPointer += 2;
@@ -64,7 +63,6 @@ function ExecuteClrInstruction(thread) {
         case 0x13: // stloc.s
             var value = thread.stack.pop();
             var index = methodData[frame.instructionPointer + 1];
-            // console.log('stloc.s ', index);
             frame.locals[index] = value;
             frame.instructionPointer += 2;
             return true;
