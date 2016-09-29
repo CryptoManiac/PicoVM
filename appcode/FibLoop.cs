@@ -4,11 +4,24 @@
 
 using System;
 
-class Fib
+class FibLoop
 {
 	static long fib(long n)
 	{
-		return n > 1 ? fib(n - 1) + fib(n - 2) : n;
+		if(n <= 1)
+			return n;
+
+		long fibo = 1;
+		long fiboPrev = 1;
+
+		for(long i = 2; i < n; ++i)
+		{
+			long temp = fibo;
+			fibo += fiboPrev;
+			fiboPrev = temp;
+		}
+		
+		return fibo;
 	}
 
 	static void Main(string[] args)

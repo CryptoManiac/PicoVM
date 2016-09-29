@@ -5,7 +5,7 @@
 const AppDomain = require('./CLR/AppDomain');
 
 var appDomain = new AppDomain();
-appDomain.loadAssembly("Fib.exe", function (a) {
+appDomain.loadAssembly("FibLoop.exe", function (a) {
     if (a == undefined) {
         console.log('Empty program');
         return;
