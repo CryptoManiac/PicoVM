@@ -175,7 +175,7 @@ function ExecuteClrInstruction(thread) {
                     frame.instructionPointer += 5;
                 } else {
                     // Short form
-                    offset = methodData[frame.instructionPointer + 1];
+                    offset = methodData[frame.instructionPointer + 1] << 24 >> 24;
                     frame.instructionPointer += 2;
                 }
 
