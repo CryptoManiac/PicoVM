@@ -653,6 +653,8 @@ function ExecuteClrInstruction(thread) {
                             case 0xB5: // clt.i.un
                                 thread.stack.push(~~!!((v1 << 32 >>> 32) < (v2 << 32 >>> 32)));
                                 break;
+                            default:
+                                throw "What is that?";
                         }
 
                         break;
