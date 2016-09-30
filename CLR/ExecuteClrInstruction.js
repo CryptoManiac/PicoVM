@@ -216,34 +216,64 @@ function ExecuteClrInstruction(thread) {
 
                 switch (opcode) {
                     case 0x3B: // beq
-                        newcmd = is64 ? 0x7F : 0x22;
+                        newcmd = is64 ? 0x7F : 0xE8;
                         break;
                     case 0x3C: // bge
-                        newcmd = is64 ? 0x98 : 0x23;
+                        newcmd = is64 ? 0x98 : 0xE9;
                         break;
                     case 0x3D: // bgt
-                        newcmd = is64 ? 0x99 : 0x4E;
+                        newcmd = is64 ? 0x99 : 0xF0;
                         break;
                     case 0x3E: // ble
-                        newcmd = is64 ? 0xFA : 0x56;
+                        newcmd = is64 ? 0xFA : 0xF1;
                         break;
                     case 0x3F: // blt
-                        newcmd = is64 ? 0xFB : 0x57;
+                        newcmd = is64 ? 0xFB : 0xF2;
                         break;
                     case 0x40: // bne.un
-                        newcmd = is64 ? 0xFC : 0x77;
+                        newcmd = is64 ? 0xFC : 0xF3;
                         break;
                     case 0x41: // bge.un
-                        newcmd = is64 ? 0xFD : 0x78;
+                        newcmd = is64 ? 0xFD : 0xF4;
                         break;
                     case 0x42: // bgt.un
-                        newcmd = is64 ? 0xFF : 0xA0;
+                        newcmd = is64 ? 0xFF : 0xF5;
                         break;
                     case 0x43: // ble.un
-                        newcmd = is64 ? 0xF8 : 0xA1;
+                        newcmd = is64 ? 0xF8 : 0xF6;
                         break;
                     case 0x44: // blt.un
-                        newcmd = is64 ? 0xF9 : 0xCA;
+                        newcmd = is64 ? 0xF9 : 0xF7;
+                        break;
+                    case 0x2E: // beq.s
+                        newcmd = is64 ? 0x22 : 0x6B;
+                        break;
+                    case 0x2F: // bge.s
+                        newcmd = is64 ? 0x23 : 0x6C;
+                        break;
+                    case 0x30: // bgt.s
+                        newcmd = is64 ? 0x4E : 0x76;
+                        break;
+                    case 0x31: // ble.s
+                        newcmd = is64 ? 0x56 : 0xBE;
+                        break;
+                    case 0x32: // blt.s
+                        newcmd = is64 ? 0x57 : 0xBF;
+                        break;
+                    case 0x33: // bne.un.s
+                        newcmd = is64 ? 0x77 : 0xCB;
+                        break;
+                    case 0x34: // bge.un.s
+                        newcmd = is64 ? 0x78 : 0xCC;
+                        break;
+                    case 0x35: // bgt.un.s
+                        newcmd = is64 ? 0xA0 : 0xCD;
+                        break;
+                    case 0x36: // ble.un.s
+                        newcmd = is64 ? 0xA1 : 0xCE;
+                        break;
+                    case 0x37: // blt.un.s
+                        newcmd = is64 ? 0xCA : 0xCF;
                         break;
                     default:
                         throw "Unknown instruction";
