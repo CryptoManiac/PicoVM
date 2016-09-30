@@ -19,10 +19,20 @@ function AppDomain() {
         return obj;
     }
 
-    var index = 0;
+    this.findObject = function (objectID) {
+        var length = this.heap.length;
+        while (--length) {
+            if (this.heap[length].objectID == objectID) {
+                return this.heap[length];
+            }
+        }
+        return null; // No such object
+    }
+
+    var objectID = 0;
 
     function Reference() {
-        this.index = index++;
+        this.objectID = objectID++;
     }
 
     Reference.prototype.initStruct = function () { this.value = new Struct(); };

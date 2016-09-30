@@ -641,20 +641,13 @@ function ExecuteClrInstruction(thread) {
             var arraySize = thread.stack.pop();
             var array = appDomain.createObject();
             array.initArray(arraySize);
-            thread.stack.push(array.index);
+            thread.stack.push(array.objectID);
             frame.instructionPointer += 5;
             return true;
         case 0x8E: // ldlen
-            var arrayIndex = thread.stack.pop();
-            var array;
-            for (var n = 0; n < appDomain.heap.length; ++n) {
-                if (appDomain.heap[n].index == arrayIndex) {
-                    array = appDomain.heap[n];
-                    break;
-                }
-            }
-
-            thread.stack.push(array.value.length);
+            var arrayID = thread.stack.pop();
+            var array = appDomain.findObject(arrayID).value;
+            thread.stack.push(array.length);
             frame.instructionPointer += 1;
             return true;
         case 0x9C: // stelem.i1
@@ -663,14 +656,8 @@ function ExecuteClrInstruction(thread) {
         case 0x9F: // stelem.i8
             var value = thread.stack.pop();
             var elementIndex = thread.stack.pop();
-            var arrayIndex = thread.stack.pop();
-            var array;
-            for (var n = 0; n < appDomain.heap.length; ++n) {
-                if (appDomain.heap[n].index == arrayIndex) {
-                    array = appDomain.heap[n];
-                    break;
-                }
-            }
+            var arrayID = thread.stack.pop();
+            var array = appDomain.findObject(arrayID);
 
             switch(opcode) {
                 case 0x9C: // stelem.i1
@@ -699,14 +686,8 @@ function ExecuteClrInstruction(thread) {
         case 0x96: // ldelem.i8
             {
                 var elementIndex = thread.stack.pop();
-                var arrayIndex = thread.stack.pop();
-                var array;
-                for (var n = 0; n < appDomain.heap.length; ++n) {
-                    if (appDomain.heap[n].index == arrayIndex) {
-                        array = appDomain.heap[n];
-                        break;
-                    }
-                }
+                var arrayID = thread.stack.pop();
+                var array = appDomain.findObject(arrayID);
 
                 switch(opcode) {
                     case 0x90: // ldelem.i1
@@ -735,14 +716,8 @@ function ExecuteClrInstruction(thread) {
         case 0x95: // ldelem.u4
             {
                 var elementIndex = thread.stack.pop();
-                var arrayIndex = thread.stack.pop();
-                var array;
-                for (var n = 0; n < appDomain.heap.length; ++n) {
-                    if (appDomain.heap[n].index == arrayIndex) {
-                        array = appDomain.heap[n];
-                        break;
-                    }
-                }
+                var arrayID = thread.stack.pop();
+                var array = appDomain.findObject(arrayID);
 
                 switch(opcode) {
                     case 0x91: // ldelem.u1
