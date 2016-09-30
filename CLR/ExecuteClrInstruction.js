@@ -163,7 +163,7 @@ function ExecuteClrInstruction(thread) {
         case 0x37: // blt.un.s
             {
                 var offset;
-                
+
                 if (opcode >= 0x38 && opcode <= 0x44) {
                     // Normal form
                     offset = ((methodData[frame.instructionPointer + 1]) |
@@ -348,136 +348,214 @@ function ExecuteClrInstruction(thread) {
         case 0x63: // shr
         case 0x64: // shr.un
             {
+                var b = thread.stack[thread.stack.length - 1];
+                var a = thread.stack[thread.stack.length - 2];
+                var is64 = (b.constructor == Int64);
+                var newcmd;
+
+                if (b.constructor != a.constructor) {
+                    // Arguments must have identical type.
+                    throw "Invalid data";
+                }
+
+                switch (opcode) {
+                    case 0x58: // add
+                        // => add.i8 or add.i
+                        newcmd = is64 ? 0xA3 : 0xC1;
+                        break;
+                    case 0x59: // sub
+                        // => sub.i8 or sub.i
+                        newcmd = is64 ? 0xA4 : 0xC4;
+                        break;
+                    case 0x5A: // mul
+                        // => mul.i8 or mul.i
+                        newcmd = is64 ? 0xA5 : 0xC5;
+                        break;
+                    case 0x5B: // div
+                        // => div.i8 or div.i
+                        newcmd = is64 ? 0xA6 : 0xC7;
+                        break;
+                    case 0x5C: // div.un
+                        // => div.i8.un or div.i.un
+                        newcmd = is64 ? 0xA7 : 0xC8;
+                        break;
+                    case 0x5D: // rem
+                        // => rem.i8 or rem.i
+                        newcmd = is64 ? 0xA8 : 0xC9;
+                        break;
+                    case 0x5E: // rem.un
+                        // => rem.i8.un or rem.i.un
+                        newcmd = is64 ? 0xA9 : 0xE1;
+                        break;
+                    case 0x5F: // and
+                        // => and.i8 or and.i
+                        newcmd = is64 ? 0xAA : 0xE2;
+                        break;
+                    case 0x60: // or
+                        // => or.i8 or or.i
+                        newcmd = is64 ? 0xAB : 0xE3;
+                        break;
+                    case 0x61: // xor
+                        // => xor.i8 or xor.i
+                        newcmd = is64 ? 0xAC : 0xE4;
+                        break;
+                    case 0x62: // shl
+                        // => shl.i8 or shl.i
+                        newcmd = is64 ? 0xAD : 0xE5;
+                        break;
+                    case 0x63: // shr
+                        // => shr.i8 or shr.i
+                        newcmd = is64 ? 0xAE : 0xE6;
+                        break;
+                    case 0x64: // shr.un
+                        // => shr.i8.un or shr.i.un
+                        newcmd = is64 ? 0xAF : 0xE7;
+                        break;
+                    default:
+                        throw "Unknown instruction";
+                }
+
+                // Replace the current instruction and replay.
+                methodData[frame.instructionPointer] = newcmd;
+                return true;
+            };
+
+        case 0xC1: // add.i
+        case 0xC4: // sub.i
+        case 0xC5: // mul.i
+        case 0xC7: // div.i
+        case 0xC8: // div.i.un
+        case 0xC9: // rem.i
+        case 0xE1: // rem.i.un
+        case 0xE2: // and.i
+        case 0xE3: // or.i
+        case 0xE4: // xor.i
+        case 0xE5: // shl.i
+        case 0xE6: // shr.i
+        case 0xE7: // shr.i.un
+            {
+                /* Type-specific arithmetics */
+
                 var b = thread.stack.pop();
                 var a = thread.stack.pop();
                 frame.instructionPointer++;
 
-                var a64, b64;
-                if ((a64 = a.constructor == Int64) || (b64 = b.constructor == Int64)) {
-                    /**
-                     * int64-native workaround for 64 bit integers.
-                     */
-                    switch (opcode) {
-                        case 0x59: // sub
-                        case 0x5B: // div
-                        case 0x5C: // div.un
-                        case 0x5D: // rem
-                        case 0x5E: // rem.un
-                        case 0x59: // sub
-                        case 0x5D: // rem
-                        case 0x62: // shl
-                        case 0x63: // shr
-                        case 0x64: // shr.un
-                            {
-                                if (!a64) {
-                                    // Reinitialize "a" variable as an instance of 64 bit integer class
-                                    a = new Int64(a);
-                                }
-
-                                switch (opcode) {
-                                    case 0x59: // sub
-                                        thread.stack.push(a.sub(b));
-                                        return true;
-                                    case 0x5B: // div
-                                        thread.stack.push(a.div(b));
-                                        return true;
-                                    case 0x5C: // div.un
-                                        thread.stack.push(a.div_un(b));
-                                        return true;
-                                    case 0x5D: // rem
-                                        thread.stack.push(a.mod(b));
-                                        return true;
-                                    case 0x5E: // rem.un
-                                        thread.stack.push(a.mod_un(b));
-                                        return true;
-                                    case 0x62: // shl
-                                        thread.stack.push(a.shiftLeft(b));
-                                        return true;
-                                    case 0x63: // shr
-                                        thread.stack.push(a.shiftRight(b));
-                                        return true;
-                                    case 0x64: // shr.un
-                                        thread.stack.push(a.unsignedShiftRight(b));
-                                        return true;
-                                }
-                            };
-                        case 0x58: // add
-                        case 0x5A: // mul
-                        case 0x5F: // and
-                        case 0x60: // or
-                        case 0x61: // xor
-                            {
-                                if (!a64) {
-                                    // Swap parameter values
-                                    a = [b, a = b][0];
-                                }
-
-                                switch (opcode) {
-                                    case 0x58: // add
-                                        thread.stack.push(a.add(b));
-                                        return true;
-                                    case 0x5A: // mul
-                                        thread.stack.push(a.mul(b)); // NOTE: patched version required
-                                        return true;
-                                    case 0x5F: // and
-                                        thread.stack.push(a.and(b));
-                                        return true;
-                                    case 0x60: // or
-                                        thread.stack.push(a.or(b));
-                                        return true;
-                                    case 0x61: // xor
-                                        thread.stack.push(a.xor(b));
-                                        return true;
-                                }
-                            };
-                    }
+                switch (opcode) {
+                    case 0xC1: // add.i
+                        thread.stack.push(a + b);
+                        break;
+                    case 0xC4: // sub.i
+                        thread.stack.push(a - b);
+                        break;
+                    case 0xC5: // mul.i
+                        thread.stack.push(a * b);
+                        break;
+                    case 0xC7: // div.i
+                        thread.stack.push(a / b >> 0);
+                        break;
+                    case 0xC8: // div.i.un
+                        a = a << 32 >>> 32;
+                        b = b << 32 >>> 32;
+                        thread.stack.push(a / b >> 0);
+                        break;
+                    case 0xC9: // rem.i
+                        thread.stack.push(a % b);
+                        break;
+                    case 0xE1: // rem.i.un
+                        a = a << 32 >>> 32;
+                        b = b << 32 >>> 32;
+                        thread.stack.push(a % b);
+                        break;
+                    case 0xE2: // and.i
+                        thread.stack.push(a & b);
+                        break;
+                    case 0xE3: // or.i
+                        thread.stack.push(a | b);
+                        break;
+                    case 0xE4: // xor.i
+                        thread.stack.push(a ^ b);
+                        break;
+                    case 0xE5: // shl.i
+                        thread.stack.push(a << b);
+                        break;
+                    case 0xE6: // shr.i
+                        thread.stack.push(a >> b);
+                        break;
+                    case 0xE7: // shr.i.un
+                        thread.stack.push(a >>> b);
+                        break;
+                    default:
+                        throw "Unknown instruction";
                 }
 
+                return true;
+            };
+
+        case 0xA3: // add.i8
+        case 0xA4: // sub.i8
+        case 0xA5: // mul.i8
+        case 0xA6: // div.i8
+        case 0xA7: // div.i8.un
+        case 0xA8: // rem.i8
+        case 0xA9: // rem.i8.un
+        case 0xAA: // and.i8
+        case 0xAB: // or.i8
+        case 0xAC: // xor.i8
+        case 0xAD: // shl.i8
+        case 0xAE: // shr.i8
+        case 0xAF: // shr.i8.un
+            {
+                /* Type-specific int64 arithmetics */
+
+                var b = thread.stack.pop();
+                var a = thread.stack.pop();
+                frame.instructionPointer++;
+
                 switch (opcode) {
-                    case 0x5A: // mul
-                        thread.stack.push(a * b);
-                        return true;
-                    case 0x5F: // and
-                        thread.stack.push(a & b);
-                        return true;
-                    case 0x58: // add
-                        thread.stack.push(a + b);
-                        return true;
-                    case 0x59: // sub
-                        thread.stack.push(a - b);
-                        return true;
-                    case 0x60: // or
-                        thread.stack.push(a | b);
-                        return true;
-                    case 0x61: // xor
-                        thread.stack.push(a ^ b);
-                        return true;
-                    case 0x5B: // div
-                        thread.stack.push(a / b >> 0);
-                        return true;
-                    case 0x5C: // div.un
-                        a = a << 32 >>> 32;
-                        b = b << 32 >>> 32;
-                        thread.stack.push(a / b >> 0);
-                        return true;
-                    case 0x5D: // rem
-                        thread.stack.push(a % b);
-                        return true;
-                    case 0x5E: // rem.un
-                        a = a << 32 >>> 32;
-                        b = b << 32 >>> 32;
-                        thread.stack.push(a % b);
-                        return true;
-                    case 0x62: // shl
-                        thread.stack.push(a << b);
-                        return true;
-                    case 0x63: // shr
-                        thread.stack.push(a >> b);
-                        return true;
-                    case 0x64: // shr.un
-                        thread.stack.push(a >>> b);
-                        return true;
-                };
+                    case 0xA3: // add.i8
+                        thread.stack.push(a.add(b));
+                        break;
+                    case 0xA4: // sub.i8
+                        thread.stack.push(a.sub(b));
+                        break;
+                    case 0xA5: // mul.i8
+                        thread.stack.push(a.mul(b));
+                        break;
+                    case 0xA6: // div.i8
+                        thread.stack.push(a.div(b));
+                        break;
+                    case 0xA7: // div.i8.un
+                        thread.stack.push(a.div_un(b));
+                        break;
+                    case 0xA8: // rem.i8
+                        thread.stack.push(a.mod(b));
+                        break;
+                    case 0xA9: // rem.i8.un
+                        thread.stack.push(a.mod_un(b));
+                        break;
+                    case 0xAA: // and.i8
+                        thread.stack.push(a.and(b));
+                        break;
+                    case 0xAB: // or.i8
+                        thread.stack.push(a.or(b));
+                        break;
+                    case 0xAC: // xor.i8
+                        thread.stack.push(a.xor(b));
+                        break;
+                    case 0xAD: // shl.i8
+                        thread.stack.push(a.shiftLeft(b));
+                        break;
+                    case 0xAE: // shr.i8
+                        thread.stack.push(a.shiftRight(b));
+                        break;
+                    case 0xAF: // shr.i8.un
+                        thread.stack.push(a.unsignedShiftRight(b));
+                        break;
+                    default:
+                        throw "Unknown instruction";
+                }
+
+                return true;
             };
         case 0x65: // neg
         case 0x66: // not
@@ -489,8 +567,6 @@ function ExecuteClrInstruction(thread) {
         case 0xD1: // conv.u2
         case 0x6D: // conv.u4
         case 0x6E: // conv.u8
-            //console.log('offset=' + frame.instructionPointer.toString(16), opcode.toString(16), thread.stack);
-
             var a = thread.stack.pop();
             frame.instructionPointer++;
             if (a.constructor == Int64) {
