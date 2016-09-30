@@ -569,31 +569,43 @@ function ExecuteClrInstruction(thread) {
                     case 0x03: // cgt.un
                     case 0x04: // clt
                     case 0x05: // clt.un
-                        var is64 = (thread.stack[thread.stack.length - 1].constructor == Int64);
-                        var newSuffix;
+                        var v1 = thread.stack[thread.stack.length - 1];
+                        var v2 = thread.stack[thread.stack.length - 2];
+                        var is64 = (v1.constructor == Int64);
+                        var newsuf;
+
+                        if (v1.constructor != v2.constructor) {
+                            // Arguments must have identical type.
+                            throw "Invalid data";
+                        }
 
                         switch (suffix) {
                             case 0x01: // ceq
-                                newSuffix = is64 ? 0xA1 : 0xB1;
+                                // => ceq.i8 or ceq.i
+                                newsuf = is64 ? 0xA1 : 0xB1;
                                 break;
                             case 0x02: // cgt
-                                newSuffix = is64 ? 0xA2 : 0xB2;
+                                // => cgt.i8 or cgt.i
+                                newsuf = is64 ? 0xA2 : 0xB2;
                                 break;
                             case 0x03: // cgt.un
-                                newSuffix = is64 ? 0xA3 : 0xB3;
+                                // => cgt.i8.un or cgt.i.un
+                                newsuf = is64 ? 0xA3 : 0xB3;
                                 break;
                             case 0x04: // clt
-                                newSuffix = is64 ? 0xA4 : 0xB4;
+                                // => clt.i8 or clt.i
+                                newsuf = is64 ? 0xA4 : 0xB4;
                                 break;
                             case 0x05: // clt.un
-                                newSuffix = is64 ? 0xA5 : 0xB5;
+                                // => clt.i8.un or clt.i.un
+                                newsuf = is64 ? 0xA5 : 0xB5;
                                 break;
                             default:
                                 throw "What is that?";
                         };
 
                         // Replace opcode and replay the execution.
-                        methodData[frame.instructionPointer + 1] = newSuffix;
+                        methodData[frame.instructionPointer + 1] = newsuf;
                         return true;
 
                     /* Non-ECMA type-specific instructions */
