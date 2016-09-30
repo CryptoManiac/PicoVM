@@ -565,65 +565,86 @@ function ExecuteClrInstruction(thread) {
                 var suffix = methodData[frame.instructionPointer + 1];
                 switch(suffix) {
                     case 0x01: // ceq
-                        var v2 = thread.stack.pop();
-                        var v1 = thread.stack.pop();
-
-                        if ((v2_64 = v2.constructor == Int64) || (v1_64 = v1.constructor == Int64)) {
-                            thread.stack.push(~~!!(v1.compare(v2) == 0));
-                            frame.instructionPointer += 2;
-                            return true;
-                        }
-
-                        thread.stack.push(~~!!(v1 == v2));
-                        break;
                     case 0x02: // cgt
-                        var v2 = thread.stack.pop();
-                        var v1 = thread.stack.pop();
-
-                        if ((v2_64 = v2.constructor == Int64) || (v1_64 = v1.constructor == Int64)) {
-                            thread.stack.push(~~!!(v1.compare(v2) > 0));
-                            frame.instructionPointer += 2;
-                            return true;
-                        }
-
-                        thread.stack.push(~~!!(v1 > v2));
-                        break;
                     case 0x03: // cgt.un
-                        var v2 = thread.stack.pop();
-                        var v1 = thread.stack.pop();
-
-                        if ((v2_64 = v2.constructor == Int64) || (v1_64 = v1.constructor == Int64)) {
-                            thread.stack.push(~~!!(v1.compare_un(v2) > 0));
-                            frame.instructionPointer += 2;
-                            return true;
-                        }
-
-                        thread.stack.push(~~!!((v1 << 32 >>> 32) > (v2 << 32 >>> 32)));
-                        break;
                     case 0x04: // clt
-                        var v2 = thread.stack.pop();
-                        var v1 = thread.stack.pop();
-
-                        if ((v2_64 = v2.constructor == Int64) || (v1_64 = v1.constructor == Int64)) {
-                            thread.stack.push(~~!!(v1.compare(v2) < 0));
-                            frame.instructionPointer += 2;
-                            return true;
-                        }
-
-                        thread.stack.push(~~!!(v1 < v2));
-                        break;
                     case 0x05: // clt.un
+                        var is64 = (thread.stack[thread.stack.length - 1].constructor == Int64);
+                        var newSuffix;
+
+                        switch (suffix) {
+                            case 0x01: // ceq
+                                newSuffix = is64 ? 0xA1 : 0xB1;
+                                break;
+                            case 0x02: // cgt
+                                newSuffix = is64 ? 0xA2 : 0xB2;
+                                break;
+                            case 0x03: // cgt.un
+                                newSuffix = is64 ? 0xA3 : 0xB3;
+                                break;
+                            case 0x04: // clt
+                                newSuffix = is64 ? 0xA4 : 0xB4;
+                                break;
+                            case 0x05: // clt.un
+                                newSuffix = is64 ? 0xA5 : 0xB5;
+                                break;
+                            default:
+                                throw "What is that?";
+                        };
+
+                        // Replace opcode and replay the execution.
+                        methodData[frame.instructionPointer + 1] = newSuffix;
+                        return true;
+
+                    /* Non-ECMA type-specific instructions */
+                    case 0xA1: // ceq.i8
+                    case 0xA2: // cgt.i8
+                    case 0xA3: // cgt.i8.un
+                    case 0xA4: // clt.i8
+                    case 0xA5: // clt.i8.un
+                    case 0xB1: // ceq.i
+                    case 0xB2: // cgt.i
+                    case 0xB3: // cgt.i.un
+                    case 0xB4: // clt.i
+                    case 0xB5: // clt.i.un
                         var v2 = thread.stack.pop();
                         var v1 = thread.stack.pop();
 
-                        if ((v2_64 = v2.constructor == Int64) || (v1_64 = v1.constructor == Int64)) {
-                            thread.stack.push(~~!!(v1.compare_un(v2) < 0));
-                            frame.instructionPointer += 2;
-                            return true;
+                        switch (suffix) {
+                            case 0xA1: // ceq.i8
+                                thread.stack.push(~~!!(v1.compare(v2) == 0));
+                                break;
+                            case 0xA2: // cgt.i8
+                                thread.stack.push(~~!!(v1.compare(v2) > 0));
+                                break;
+                            case 0xA3: // cgt.i8.un
+                                thread.stack.push(~~!!(v1.compare_un(v2) > 0));
+                                break;
+                            case 0xA4: // clt.i8
+                                thread.stack.push(~~!!(v1.compare(v2) < 0));
+                                break;
+                            case 0xA5: // clt.i8.un
+                                thread.stack.push(~~!!(v1.compare_un(v2) < 0));
+                                break;
+                            case 0xB1: // ceq.i
+                                thread.stack.push(~~!!(v1 == v2));
+                                break;
+                            case 0xB2: // cgt.i
+                                thread.stack.push(~~!!(v1 > v2));
+                                break;
+                            case 0xB3: // cgt.i.un
+                                thread.stack.push(~~!!((v1 << 32 >>> 32) > (v2 << 32 >>> 32)));
+                                break;
+                            case 0xB4: // clt.i
+                                thread.stack.push(~~!!(v1 < v2));
+                                break;
+                            case 0xB5: // clt.i.un
+                                thread.stack.push(~~!!((v1 << 32 >>> 32) < (v2 << 32 >>> 32)));
+                                break;
                         }
 
-                        thread.stack.push(~~!!((v1 << 32 >>> 32) < (v2 << 32 >>> 32)));
                         break;
+
                     default:
                         throw "Unknown instruction: 0xfe 0x" + suffix.toString(16);
                 }
