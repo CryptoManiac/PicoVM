@@ -745,7 +745,7 @@ function ExecuteClrInstruction(thread) {
                     case 0x6A: // conv.i8
                     case 0x6E: // conv.u8
                         // Replace current opcode with nop and push the value back on stack
-                        methodData[frame.instructionPointer - 1] = 0x00;
+                        //methodData[frame.instructionPointer - 1] = 0x00;
                         thread.stack.push(a);
                         return true;
                 }
