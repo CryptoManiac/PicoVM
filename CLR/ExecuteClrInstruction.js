@@ -40,13 +40,21 @@ function ExecuteClrInstruction(thread) {
             var value = frame.locals[index];
             thread.stack.push(value);
             return true;
-        case 0x10: // starg.s
+        case 0x0E: // ldarg.s <index>
+            var index = methodData[frame.instructionPointer + 1];
+            var value = frame.arguments[index];
+            thread.stack.push(value);
+            frame.instructionPointer += 2;
+            return true;
+        case 0x0F: // ldarga.s <index>
+            throw "Not yet implemented";
+        case 0x10: // starg.s <index>
             var value = thread.stack.pop();
             var index = methodData[frame.instructionPointer + 1];
             frame.arguments[index] = value;
             frame.instructionPointer += 2;
             return true;
-        case 0x11: // ldloc.s
+        case 0x11: // ldloc.s <index>
             var index = methodData[frame.instructionPointer + 1];
             var value = frame.locals[index];
             thread.stack.push(value);
@@ -60,7 +68,7 @@ function ExecuteClrInstruction(thread) {
             var index = methodData[frame.instructionPointer++] - 0x0A;
             frame.locals[index] = value;
             return true;
-        case 0x13: // stloc.s
+        case 0x13: // stloc.s <index>
             var value = thread.stack.pop();
             var index = methodData[frame.instructionPointer + 1];
             frame.locals[index] = value;
@@ -86,7 +94,7 @@ function ExecuteClrInstruction(thread) {
             thread.stack.push(opcode - 0x16);
             frame.instructionPointer++;
             return true;
-        case 0x1F: // ldc.i4.s
+        case 0x1F: // ldc.i4.s <number>
             var value = methodData[frame.instructionPointer + 1] << 24 >> 24;
             thread.stack.push(value);
             frame.instructionPointer += 2;
@@ -112,6 +120,15 @@ function ExecuteClrInstruction(thread) {
                 frame.instructionPointer += 9;
                 return true;
             };
+        case 0x46: // ldind.i1
+        case 0x48: // ldind.i2
+        case 0x4A: // ldind.i4
+        case 0x4C: // ldind.i8 | ldind.u8
+            throw "Not yet implemented";
+        case 0x47: // ldind.u1
+        case 0x49: // ldind.u2
+        case 0x4B: // ldind.u4
+            throw "Not yet implemented";
         case 0x25: // dup
             var value = thread.stack.pop();
             thread.stack.push(value);
@@ -792,7 +809,7 @@ function ExecuteClrInstruction(thread) {
                     thread.stack.push(new Int64(a << 32 >>> 32));
                     return true;
             }
-        case 0xfe:
+        case 0xFE: // Two-byte instructions
             {
                 var suffix = methodData[frame.instructionPointer + 1];
                 switch(suffix) {
@@ -801,43 +818,69 @@ function ExecuteClrInstruction(thread) {
                     case 0x03: // cgt.un
                     case 0x04: // clt
                     case 0x05: // clt.un
-                        var v1 = thread.stack[thread.stack.length - 1];
-                        var v2 = thread.stack[thread.stack.length - 2];
-                        var is64 = (v1.constructor == Int64);
-                        var newsuf;
+                        {
+                            var v1 = thread.stack[thread.stack.length - 1];
+                            var v2 = thread.stack[thread.stack.length - 2];
+                            var is64 = (v1.constructor == Int64);
+                            var newsuf;
 
-                        if (v1.constructor != v2.constructor) {
-                            // Arguments must have identical type.
-                            throw "Invalid data";
-                        }
+                            if (v1.constructor != v2.constructor) {
+                                // Arguments must have identical type.
+                                throw "Invalid data";
+                            }
 
-                        switch (suffix) {
-                            case 0x01: // ceq
-                                // => ceq.i8 or ceq.i
-                                newsuf = is64 ? 0xA1 : 0xB1;
-                                break;
-                            case 0x02: // cgt
-                                // => cgt.i8 or cgt.i
-                                newsuf = is64 ? 0xA2 : 0xB2;
-                                break;
-                            case 0x03: // cgt.un
-                                // => cgt.i8.un or cgt.i.un
-                                newsuf = is64 ? 0xA3 : 0xBB;
-                                break;
-                            case 0x04: // clt
-                                // => clt.i8 or clt.i
-                                newsuf = is64 ? 0xA4 : 0xBC;
-                                break;
-                            case 0x05: // clt.un
-                                // => clt.i8.un or clt.i.un
-                                newsuf = is64 ? 0xA5 : 0xBD;
-                                break;
-                            default:
-                                throw "What is that?";
+                            switch (suffix) {
+                                case 0x01: // ceq
+                                    // => ceq.i8 or ceq.i
+                                    newsuf = is64 ? 0xA1 : 0xB1;
+                                    break;
+                                case 0x02: // cgt
+                                    // => cgt.i8 or cgt.i
+                                    newsuf = is64 ? 0xA2 : 0xB2;
+                                    break;
+                                case 0x03: // cgt.un
+                                    // => cgt.i8.un or cgt.i.un
+                                    newsuf = is64 ? 0xA3 : 0xBB;
+                                    break;
+                                case 0x04: // clt
+                                    // => clt.i8 or clt.i
+                                    newsuf = is64 ? 0xA4 : 0xBC;
+                                    break;
+                                case 0x05: // clt.un
+                                    // => clt.i8.un or clt.i.un
+                                    newsuf = is64 ? 0xA5 : 0xBD;
+                                    break;
+                                default:
+                                    throw "What is that?";
+                            };
+
+                            // Replace opcode and replay the execution.
+                            methodData[frame.instructionPointer + 1] = newsuf;
+                            return true;
                         };
 
-                        // Replace opcode and replay the execution.
-                        methodData[frame.instructionPointer + 1] = newsuf;
+                    case 0x09: // ldarg <index>
+                        var index = methodData[frame.instructionPointer + 1] | (methodData[frame.instructionPointer + 2] << 8);
+                        var value = frame.arguments[index];
+                        thread.stack.push(value);
+                        frame.instructionPointer += 4;
+                        return true;
+
+                    case 0x0A: // ldarga <index>
+                        throw "Not yet implemented";
+
+                    case 0x0B: // starg <index>
+                        var value = thread.stack.pop();
+                        var index = methodData[frame.instructionPointer + 1] | (methodData[frame.instructionPointer + 2] << 8);
+                        frame.arguments[index] = value;
+                        frame.instructionPointer += 4;
+                        return true;
+                    
+                    case 0x0E: // stloc <index>
+                        var value = thread.stack.pop();
+                        var index = methodData[frame.instructionPointer + 1] | (methodData[frame.instructionPointer + 2] << 8);
+                        frame.locals[index] = value;
+                        frame.instructionPointer += 4;
                         return true;
 
                     /* Non-ECMA type-specific instructions */
@@ -851,52 +894,54 @@ function ExecuteClrInstruction(thread) {
                     case 0xBB: // cgt.i.un
                     case 0xBC: // clt.i
                     case 0xBD: // clt.i.un
-                        var v2 = thread.stack.pop();
-                        var v1 = thread.stack.pop();
+                        {
+                            var v2 = thread.stack.pop();
+                            var v1 = thread.stack.pop();
 
-                        switch (suffix) {
-                            case 0xA1: // ceq.i8
-                                thread.stack.push(~~!!(v1.compare(v2) == 0));
-                                break;
-                            case 0xA2: // cgt.i8
-                                thread.stack.push(~~!!(v1.compare(v2) > 0));
-                                break;
-                            case 0xA3: // cgt.i8.un
-                                thread.stack.push(~~!!(v1.compare_un(v2) > 0));
-                                break;
-                            case 0xA4: // clt.i8
-                                thread.stack.push(~~!!(v1.compare(v2) < 0));
-                                break;
-                            case 0xA5: // clt.i8.un
-                                thread.stack.push(~~!!(v1.compare_un(v2) < 0));
-                                break;
-                            case 0xB1: // ceq.i
-                                thread.stack.push(~~!!(v1 == v2));
-                                break;
-                            case 0xB2: // cgt.i
-                                thread.stack.push(~~!!(v1 > v2));
-                                break;
-                            case 0xBB: // cgt.i.un
-                                thread.stack.push(~~!!((v1 << 32 >>> 32) > (v2 << 32 >>> 32)));
-                                break;
-                            case 0xBC: // clt.i
-                                thread.stack.push(~~!!(v1 < v2));
-                                break;
-                            case 0xBD: // clt.i.un
-                                thread.stack.push(~~!!((v1 << 32 >>> 32) < (v2 << 32 >>> 32)));
-                                break;
-                            default:
-                                throw "What is that?";
-                        }
+                            switch (suffix) {
+                                case 0xA1: // ceq.i8
+                                    thread.stack.push(~~!!(v1.compare(v2) == 0));
+                                    break;
+                                case 0xA2: // cgt.i8
+                                    thread.stack.push(~~!!(v1.compare(v2) > 0));
+                                    break;
+                                case 0xA3: // cgt.i8.un
+                                    thread.stack.push(~~!!(v1.compare_un(v2) > 0));
+                                    break;
+                                case 0xA4: // clt.i8
+                                    thread.stack.push(~~!!(v1.compare(v2) < 0));
+                                    break;
+                                case 0xA5: // clt.i8.un
+                                    thread.stack.push(~~!!(v1.compare_un(v2) < 0));
+                                    break;
+                                case 0xB1: // ceq.i
+                                    thread.stack.push(~~!!(v1 == v2));
+                                    break;
+                                case 0xB2: // cgt.i
+                                    thread.stack.push(~~!!(v1 > v2));
+                                    break;
+                                case 0xBB: // cgt.i.un
+                                    thread.stack.push(~~!!((v1 << 32 >>> 32) > (v2 << 32 >>> 32)));
+                                    break;
+                                case 0xBC: // clt.i
+                                    thread.stack.push(~~!!(v1 < v2));
+                                    break;
+                                case 0xBD: // clt.i.un
+                                    thread.stack.push(~~!!((v1 << 32 >>> 32) < (v2 << 32 >>> 32)));
+                                    break;
+                                default:
+                                    throw "What is that?";
+                            }
+
+                            frame.instructionPointer += 2;
+                            return true;
+                        };
 
                         break;
 
                     default:
                         throw "Unknown instruction: 0xfe 0x" + suffix.toString(16);
                 }
-
-                frame.instructionPointer += 2;
-                return true;                        
             };
         case 0x72: // ldstr (T)
             var stringToken = readToken(methodData, frame.instructionPointer + 1);
@@ -1001,6 +1046,8 @@ function ExecuteClrInstruction(thread) {
                 frame.instructionPointer += 1;
                 return true;
             };
+        case 0x8F: // ldelema <type token>
+            throw "Not yet implemented";
         case 0xE0: // conv.u
             var value = thread.stack.pop();
             thread.stack.push(value << 32 >>> 32);
