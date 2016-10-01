@@ -70,7 +70,7 @@ function ThreadExecute() {
                             frame.localsSignature = CliSignatureParser.parseLocalVarSig(standAloneSigRow.createReader());
                             frame.locals.length = frame.localsSignature.Count;
                         }
-                        console.log(frame);
+                        // console.log(frame);
                     }
                 }
                 result = true;
