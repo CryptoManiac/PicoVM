@@ -219,7 +219,13 @@ function ExecuteClrInstruction(thread) {
         case 0x36: // ble.un.s
         case 0x37: // blt.un.s
             {
-                /* Standard numeric comparison operations */
+                /**
+                 * Standard numeric comparison operations 
+                 * 
+                 * In order to avoid runtime type checking we need to get rid of polymorphic instructions somehow. We're
+                 *  doing this through simple translation into our own set of type-specific instructions. Instruction is being replaced
+                 *  with suitable one right in the memory stream and replay is executed then. 
+                 * */
 
                 var b = thread.stack[thread.stack.length - 1];
                 var a = thread.stack[thread.stack.length - 2];
@@ -521,6 +527,14 @@ function ExecuteClrInstruction(thread) {
         case 0x63: // shr
         case 0x64: // shr.un
             {
+                /**
+                 * Standard arithmetic and logical operations 
+                 * 
+                 * In order to avoid runtime type checking we need to get rid of polymorphic instructions somehow. We're
+                 *  doing this through simple translation into our own set of type-specific instructions. Instruction is being replaced
+                 *  with suitable one right in the memory stream and replay is executed then. 
+                 * */
+
                 var b = thread.stack[thread.stack.length - 1];
                 var a = thread.stack[thread.stack.length - 2];
                 var is64 = (b.constructor == Int64);
@@ -607,7 +621,7 @@ function ExecuteClrInstruction(thread) {
         case 0xE6: // shr.i
         case 0xE7: // shr.i.un
             {
-                /* Type-specific arithmetics */
+                /* Type-specific integer arithmetics */
 
                 var b = thread.stack.pop();
                 var a = thread.stack.pop();
