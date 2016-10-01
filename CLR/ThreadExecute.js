@@ -1,5 +1,4 @@
 const CliSignatureParser = require('./CliMetadata').CliSignatureParser;
-const CorSigUncompressData = require('./CliMetadata').CorSigUncompressData;
 const ExecuteClrInstruction = require('./ExecuteClrInstruction');
 
 function ThreadExecute() {
@@ -68,12 +67,10 @@ function ThreadExecute() {
                     if (frame.methodBody.initLocals) {
                         var standAloneSigRow = clrData.metadataTables._StandAloneSig[localVarSigTok & 0x00FFFFFF];
                         if (standAloneSigRow) {
-                            frame.localsCount = CorSigUncompressData(standAloneSigRow.slice(1, standAloneSigRow.length));
-                            frame.locals.length = frame.localsCount;
-
-                            // var signature = CliSignatureParser.parseLocalVarSig(standAloneSigRow.createReader());
+                            frame.localsSignature = CliSignatureParser.parseLocalVarSig(standAloneSigRow.createReader());
+                            frame.locals.length = frame.localsSignature.Count;
                         }
-
+                        console.log(frame);
                     }
                 }
                 result = true;

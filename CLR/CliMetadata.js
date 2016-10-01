@@ -146,6 +146,19 @@ var CliSignatureParser = {
         if (reader.read() != 0x07) {
             throw "Invalid local signature";
         }
+
+        var signature = {};
+        signature.LOCAL_SIG = true;
+        signature.Count = ReadCompressedInt(reader);
+        signature.Locals = [];
+
+        for (var i = 0; i < signature.Count; ++i) {
+            signature.Locals[i] = this.parseType(reader);
+        }
+
+        return signature;
+
+/*
         var signature = {};
         signature.LOCAL_SIG = true;
         signature.Count = reader.read();
@@ -174,6 +187,7 @@ var CliSignatureParser = {
             }
             signature.Locals.push(local);
         }
+        */
     },
     parseCustomMod: function (reader) {
         var signature;
@@ -318,6 +332,25 @@ var CliSignatureParser = {
     }
 };
 
+function ReadCompressedInt(reader) {
+    var result = 0;
+    var current = reader.read();
+    if ((current & 0x80) == 0x00) {
+        return current;
+    }
+    else if ((current & 0xC0) == 0x80) {
+        result = (current & 0x3F) << 8;
+        result |= reader.read();
+    } else if ((data[0] & 0xE0) == 0xC0) {
+        result = (current & 0x1F) << 24;
+        result |= reader.read() << 16;
+        result |= reader.read() << 8;
+        result |= reader.read();
+    }
+
+    return result;
+}
+
 function CorSigUncompressData(data) {
     var result = 0;
 
@@ -384,6 +417,7 @@ function MemoryPointer(getter, setter) {
 
 */
 
+module.exports.CliElementTypes = CliElementTypes;
 module.exports.CliMetadataTableIndex = CliMetadataTableIndex;
 module.exports.CliSignatureParser = CliSignatureParser;
 module.exports.CorSigUncompressData = CorSigUncompressData;
