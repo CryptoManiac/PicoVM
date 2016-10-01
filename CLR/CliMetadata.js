@@ -318,6 +318,25 @@ var CliSignatureParser = {
     }
 };
 
+function CorSigUncompressData(data) {
+    var result = 0;
+
+    if ((data[0] & 0x80) == 0x00) {
+        return data[0];
+    }
+    else if ((data[0] & 0xC0) == 0x80) {
+        result = (data[0] & 0x3F) << 8;
+        result |= data[1];
+    } else if ((data[0] & 0xE0) == 0xC0) {
+        result = (data[0] & 0x1F) << 24;
+        result |= data[1] << 16;
+        result |= data[2] << 8;
+        result |= data[3];
+    }
+
+    return result;
+}
+
 /*
 function Struct() {
 }
@@ -367,3 +386,4 @@ function MemoryPointer(getter, setter) {
 
 module.exports.CliMetadataTableIndex = CliMetadataTableIndex;
 module.exports.CliSignatureParser = CliSignatureParser;
+module.exports.CorSigUncompressData = CorSigUncompressData;

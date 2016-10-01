@@ -1,4 +1,5 @@
 const CliSignatureParser = require('./CliMetadata').CliSignatureParser;
+const CorSigUncompressData = require('./CliMetadata').CorSigUncompressData;
 const ExecuteClrInstruction = require('./ExecuteClrInstruction');
 
 function ThreadExecute() {
@@ -15,7 +16,6 @@ function ThreadExecute() {
                         frame.executingAssembly = frame.callingAssembly;
                         frame.methodBody = clrData.getMethodBody(frame.method & 0xFFFFFF);
                         frame.state = 1;
-                        frame.methodDef = clrData.metadataTables._MethodDef[frame.method & 0xFFFFFF];
                         break;
                     case 0x0A: // MemberRef
                         var memberRef = clrData.metadataTables._MemberRef[frame.method & 0xFFFFFF];
@@ -57,14 +57,24 @@ function ThreadExecute() {
             case 1:
                 // method body execution setup
                 frame.instructionPointer = 0;
-                var methodDefSignature = frame.methodDef.signature;
+                var methodDefSignature = frame.methodBody.methodDef.signature;
+                var localVarSigTok = frame.methodBody.localVarSigTok;
                 frame.signature = CliSignatureParser.parseMethodDefSig(methodDefSignature.createReader());
                 frame.state = 5;
                 frame.argumentsCount = getMethodArgumentsInStack(frame.signature);
                 frame.arguments = this.stack.splice(this.stack.length - frame.argumentsCount, frame.argumentsCount);
-                if (frame.methodBody.localVarSigTok != undefined &&
-                    frame.methodBody.localVarSigTok != 0) {
+                if (localVarSigTok != undefined && localVarSigTok != 0) {
                     frame.locals = [];
+                    if (frame.methodBody.initLocals) {
+                        var standAloneSigRow = clrData.metadataTables._StandAloneSig[localVarSigTok & 0x00FFFFFF];
+                        if (standAloneSigRow) {
+                            frame.localsCount = CorSigUncompressData(standAloneSigRow.slice(1, standAloneSigRow.length));
+                            frame.locals.length = frame.localsCount;
+
+                            // var signature = CliSignatureParser.parseLocalVarSig(standAloneSigRow.createReader());
+                        }
+
+                    }
                 }
                 result = true;
                 break;
