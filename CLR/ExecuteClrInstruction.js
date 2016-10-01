@@ -323,6 +323,7 @@ function ExecuteClrInstruction(thread) {
                     frame.instructionPointer += 2;
                 }
 
+                // Pop values to compare.
                 var a = thread.stack.pop();
                 var b = thread.stack.pop();
 
@@ -382,6 +383,8 @@ function ExecuteClrInstruction(thread) {
                             frame.instructionPointer += offset;
                         }
                         return true;
+                    default:
+                        throw "Unknown instruction";
                 }
             };
 
@@ -423,6 +426,10 @@ function ExecuteClrInstruction(thread) {
                     offset = methodData[frame.instructionPointer + 1] << 24 >> 24;
                     frame.instructionPointer += 2;
                 }
+
+                // Pop values to compare.
+                var a = thread.stack.pop();
+                var b = thread.stack.pop();
 
                 if (opcode >= 0xF3 && opcode <= 0xF7 || opcode >= 0xCB && opcode <= 0xCF) {
                     a = a << 32 >>> 32;
@@ -478,6 +485,8 @@ function ExecuteClrInstruction(thread) {
                             frame.instructionPointer += offset;
                         }
                         return true;
+                    default:
+                        throw "Unknown instruction";
                 }
             };
 
