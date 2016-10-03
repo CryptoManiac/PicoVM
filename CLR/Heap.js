@@ -125,7 +125,7 @@ var Heap = function() {
             if (freeSpace > 8) {
                 // Create new block for the remaining free space.
                 this.writeInt(block.position + newBlockSize, -freeSpace);
-                this.writeInt(block.position + newBlockSize + 4 + freeSpace, -freeSpace);
+                this.writeInt(block.position + newBlockSize + freeSpace - 4, -freeSpace);
             } else if (freeSpace == 8) {
                 // Create empty block record
                 this.writeInt(block.position + newBlockSize, -8);
@@ -148,8 +148,9 @@ var Heap = function() {
      * Note that real purpose of this operation is to simply negate the block size values. Negative value of block
      *  size is a flag which allows garbage collector to find and merge consequent free blocks into larger one.
      */
-    this.free = function (offset) {      
-        var beginMarker = this.readInt(offset - 4);
+    this.free = function (offset) {
+        var blockBeginning = offset - 4;
+        var beginMarker = this.readInt(blockBeginning);
         if (beginMarker < 0) {
             /**
              * Oooops, it looks like something went wrong.
@@ -157,7 +158,7 @@ var Heap = function() {
             throw "Attempting to run free() on unallocated chunk of memory";
         }
 
-        var endMarker = this.readInt(offset + beginMarker + 4);
+        var endMarker = this.readInt(blockBeginning + beginMarker - 4);
 
         if (endMarker != beginMarker) {
             /**
@@ -165,8 +166,6 @@ var Heap = function() {
              */
             throw "Invalid block metadata record";
         }
-
-        var blockBeginning = offset - 4;
 
         this.writeInt(blockBeginning, -beginMarker);
         this.writeInt(blockBeginning + beginMarker - 4, -beginMarker);
