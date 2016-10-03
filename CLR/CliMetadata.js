@@ -265,6 +265,30 @@ var CliSignatureParser = {
             // BOOLEAN | CHAR | I1 | U1 | I2 | U2 | I4 | U4 | I8 | U8 | R4 | R8 | I | U
             // STRING
             // OBJECT
+
+            switch (typeId) {
+                case 0x02: // bool
+                case 0x03: // char
+                    signature.size = 2;
+                    break;
+                case 0x06: // short
+                case 0x07: // ushort
+                    signature.size = 2;
+                    break;
+                case 0x04: // sbyte
+                case 0x05: // byte
+                    signature.size = 1;
+                    break;
+                case 0x08: // int
+                case 0x09: // uint
+                    signature.size = 4;
+                    break;
+                case 0x0A: // long
+                case 0x0B: // ulong
+                    signature.size = 4;
+                    break;
+                default:
+            }
         } else if (typeId == 0x14) {
             // ARRAY Type ArrayShape
             signature.ArrayType = this.parseType(reader);
