@@ -351,7 +351,7 @@ function ExecuteClrInstruction(thread) {
                 var b = thread.stack.pop();
 
                 var result;
-                if (opcode >= 0x7F && opcode <= 0xFB || opcode >= 0x22 && opcode <= 0x57) {
+                if ( (opcode >= 0x7F && opcode <= 0xFB) || (opcode >= 0x22 && opcode <= 0x57) ) {
                     result = a.compare(b);
                 } else {
                     result = a.compare_un(b);
@@ -454,7 +454,7 @@ function ExecuteClrInstruction(thread) {
                 var a = thread.stack.pop();
                 var b = thread.stack.pop();
 
-                if (opcode >= 0xF3 && opcode <= 0xF7 || opcode >= 0xCB && opcode <= 0xCF) {
+                if ( (opcode >= 0xF3 && opcode <= 0xF7) || (opcode >= 0xCB && opcode <= 0xCF)) {
                     a = a << 32 >>> 32;
                     b = b << 32 >>> 32;
                 }
