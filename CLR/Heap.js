@@ -84,12 +84,12 @@ var Heap = function() {
     }
 
     /**
-     * Searches for a free block of memory with sufficient size, starting the from provided offset.
+     * Searches for a free block of memory with sufficient size.
      * 
      * Returns either an object which consist of block size and its position or null is there are no free blocks.
      */
-    this._findBlock = function (offset, size) {
-        var pos = offset;
+    this._findBlock = function (size) {
+        var pos = 0;
         while (pos < this._Heap.length) {
             var blockSize = this.readInt(pos);
             if (blockSize < 0) {
@@ -110,13 +110,24 @@ var Heap = function() {
      * Returns an index of the block data section.
      */
     this.alloc = function (size) {
-        var block = this._findBlock(0, size);
+        var newBlockSize = size + 8;
+        /**
+        * Rounding up to the nearest power of two.
+        */
+        newBlockSize--;
+        newBlockSize |= newBlockSize >> 1;
+        newBlockSize |= newBlockSize >> 2;
+        newBlockSize |= newBlockSize >> 4;
+        newBlockSize |= newBlockSize >> 8;
+        newBlockSize |= newBlockSize >> 16;
+        newBlockSize++;
+
+        var block = this._findBlock(newBlockSize);
 
         if (block) {
              // Split found block in two, one for the data and 
              //   one for remaining free space.
 
-            var newBlockSize = size + 8;
             this.writeInt(block.position, newBlockSize);
             this.writeInt(block.position + newBlockSize - 4, newBlockSize);
 
@@ -175,9 +186,36 @@ var Heap = function() {
      * Garbage collector routine.
      */
     this._gc = function () {
-        // TODO: merge free chunks of memory
+        /*
+         * Simplest and ugliest garbage collector which ever has been written. 
+         */
 
-        // console.log('GC:', this._Heap.length);
+        var pos = 0;
+        var freeBlocks = [];
+        while (pos < this._Heap.length) {
+            var blockSize = this.readInt(pos);
+            if (blockSize < 0) {
+                freeBlocks.push({size : Math.abs(blockSize), position: pos});
+            } else {
+                if (freeBlocks.length >= 2) {
+                    for (var n = 0; n < freeBlocks.length; ++n) {
+                        console.log(freeBlocks[n]);
+                    }
+
+                    var mergedBlockSize = freeBlocks[freeBlocks.length - 1].size + (freeBlocks[freeBlocks.length - 1].position - freeBlocks[0].position);
+                    this.writeInt(freeBlocks[0].position, -mergedBlockSize);
+                    this.writeInt(freeBlocks[freeBlocks.length - 1].position + freeBlocks[freeBlocks.length - 1].size - 4, -mergedBlockSize);
+                    
+                } else {
+                    freeBlocks.length = 0;
+                }
+                // console.log('---------');
+            }
+
+            pos += Math.abs(blockSize);
+        }
+
+
     }
 
     /**
