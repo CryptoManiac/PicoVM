@@ -25,24 +25,25 @@ var Heap = function() {
          * Allocate new buffer which size is enough to contain
          *  the current buffer and metadata. 
          */
-        var newHeap = new Uint8Array(newSize + 8);
+        var newHeap = new Uint8Array(newSize);
         newHeap.set(this._Heap)
         this._Heap = newHeap;
 
         var lastBlockBoundary = this.readInt(oldSize - 4);
 
-        if (lastBlockBoundary < 0) {
+        if (lastBlockBoundary <= 0) {
+            lastBlockBoundary = Math.abs(lastBlockBoundary);
             /**
              * xx xx xx xx 00 00 00 00 ... 00 00 00 00 xx xx xx xx
              * 
              * That was a block of free memory, so we 
              *   need to adjust its size.
              */
-            var newBlockBeginning = oldSize - Math.abs(lastBlockBoundary) - 8;
-            var newBlockSize = this._Heap.length - oldSize - lastBlockBoundary;
+            var newBlockBeginning = oldSize - lastBlockBoundary;
+            var newBlockSize = this._Heap.length - newBlockBeginning;
 
             this.writeInt(newBlockBeginning, -newBlockSize);
-            this.writeInt(newBlockBeginning + newBlockSize + 4, -newBlockSize);
+            this.writeInt(newBlockBeginning + newBlockSize - 4, -newBlockSize);
         } else {
             /** 
              * xx xx xx xx 01 23 45 67 ... AB CD EF F0 xx xx xx xx
@@ -50,9 +51,9 @@ var Heap = function() {
              * That was an allocated block, we need
              *  to add new block at the end of buffer.
              */          
-            var newBlockSize = oldSize - newSize - 8;
-            this.writeInt(oldSize, newBlockSize);
-            this.writeInt(this._Heap.length - 4, newBlockSize);
+            var newBlockSize = newSize - oldSize;
+            this.writeInt(oldSize, -newBlockSize);
+            this.writeInt(oldSize + newBlockSize - 4, -newBlockSize);
         }
     }
 
@@ -92,12 +93,12 @@ var Heap = function() {
         while (pos < this._Heap.length) {
             var blockSize = this.readInt(pos);
             if (blockSize < 0) {
-                if (!size || (-blockSize) >= (size + 8)) {
+                if (!size || Math.abs(blockSize) - 8 >= size) {
                     return {size : Math.abs(blockSize), position: pos};
                 }
             }
 
-            pos += (Math.abs(blockSize) + 8);
+            pos += Math.abs(blockSize);
         }
 
         return null;
@@ -115,13 +116,23 @@ var Heap = function() {
              // Split found block in two, one for the data and 
              //   one for remaining free space.
 
-            this.writeInt(block.position, size);
-            this.writeInt(block.position + size + 4, size);
+            var newBlockSize = size + 8;
+            this.writeInt(block.position, newBlockSize);
+            this.writeInt(block.position + newBlockSize - 4, newBlockSize);
 
-            // Create new block for the remaining free space.
-            var freeSpace = block.size - size - 8;
-            this.writeInt(block.position + size + 8, freeSpace);
-            this.writeInt(block.position + size + 8 + freeSpace, freeSpace);
+            var freeSpace = block.size - newBlockSize;
+
+            if (freeSpace > 8) {
+                // Create new block for the remaining free space.
+                this.writeInt(block.position + newBlockSize, -freeSpace);
+                this.writeInt(block.position + newBlockSize + 4 + freeSpace, -freeSpace);
+            } else if (freeSpace == 8) {
+                // Create empty block record
+                this.writeInt(block.position + newBlockSize, -8);
+                this.writeInt(block.position + newBlockSize + 4, -8);
+            } else {
+                throw "WTF??";
+            }
 
             return block.position + 4;
         } else {
@@ -155,8 +166,10 @@ var Heap = function() {
             throw "Invalid block metadata record";
         }
 
-        this.writeInt(offset - 4, -beginMarker);
-        this.writeInt(offset + Math.abs(beginMarker) + 4, -beginMarker);
+        var blockBeginning = offset - 4;
+
+        this.writeInt(blockBeginning, -beginMarker);
+        this.writeInt(blockBeginning + beginMarker - 4, -beginMarker);
     }
 
     /**
@@ -172,7 +185,7 @@ var Heap = function() {
      * New heap is a block of 1024 bytes 
      * which is surrounded by 4 byte chunks of metadata.
      */ 
-    this._Heap = new Uint8Array(16 + 8);
+    this._Heap = new Uint8Array(1024 + 8);
     
     /**
      * Fill the block metadata. 
@@ -181,18 +194,11 @@ var Heap = function() {
      *  at the beginning and the end of block. Negative integer means that 
      *  block is free, available for allocation.
      */
-    this.writeInt(0, -this._Heap.length + 8); 
-    this.writeInt(this._Heap.length - 4, -this._Heap.length + 8);
+    this.writeInt(0, -this._Heap.length);
+    this.writeInt(this._Heap.length - 4, -this._Heap.length);
 
     // var thisHeap = this;
     // setInterval(function () { thisHeap._gc.call(thisHeap) }, 100);
 }
 
-var h = new Heap();
-
-var v = h.alloc(8);
-var w = h.alloc(64);
-
-console.log(h._Heap.slice(h._Heap.length - 16, h._Heap.length));
-
-
+module.exports = Heap;
