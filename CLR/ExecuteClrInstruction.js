@@ -1,5 +1,4 @@
 const Int64 = require('int64-native').Int64;
-const UInt64 = require('int64-native').UInt64;
 
 function ExecuteClrInstruction(thread) {
     var frame = thread.callStack[thread.callStack.length - 1];

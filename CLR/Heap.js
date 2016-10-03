@@ -19,7 +19,7 @@ var Heap = function() {
         newSize |= newSize >> 4;
         newSize |= newSize >> 8;
         newSize |= newSize >> 16;
-        newSize++;
+        newSize++; 
 
         /**
          * Allocate new buffer which size is enough to contain
@@ -214,8 +214,6 @@ var Heap = function() {
 
             pos += Math.abs(blockSize);
         }
-
-
     }
 
     /**
