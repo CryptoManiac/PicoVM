@@ -177,7 +177,7 @@ function ExecuteClrInstruction(thread) {
                 default:
                     throw "NYI";
             }
-
+            thread.stack.push(value);
             frame.instructionPointer += 2;
             return true;
         case 0x0A: // stloc 0..3
