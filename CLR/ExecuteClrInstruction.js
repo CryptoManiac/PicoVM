@@ -32,6 +32,7 @@ function ExecuteClrInstruction(thread) {
             var value;
 
             switch (refobj.signature.TypeId) {
+                case 0x02: // bool
                 case 0x04: // i1
                 case 0x05:
                     value = appDomain.memory.readByte(refobj.reference);
@@ -63,6 +64,7 @@ function ExecuteClrInstruction(thread) {
             var value;
 
             switch (refobj.signature.TypeId) {
+                case 0x02: // bool
                 case 0x04: // i1
                 case 0x05:
                     value = appDomain.memory.readByte(refobj.reference);
@@ -90,6 +92,7 @@ function ExecuteClrInstruction(thread) {
             var refobj = frame.arguments[index];
             var value;
             switch (refobj.signature.TypeId) {
+                case 0x02: // bool
                 case 0x04: // i1
                 case 0x05:
                     value = appDomain.memory.readByte(refobj.reference);
@@ -125,6 +128,7 @@ function ExecuteClrInstruction(thread) {
             var refobj = frame.arguments[index];
 
             switch (refobj.signature.TypeId) {
+                case 0x02: // bool
                 case 0x04: // i1
                 case 0x05:
                     appDomain.memory.writeByte(refobj.reference, value);
@@ -153,6 +157,7 @@ function ExecuteClrInstruction(thread) {
             var value;
 
             switch (refobj.signature.TypeId) {
+                case 0x02: // bool
                 case 0x04: // i1
                 case 0x05:
                     value = appDomain.memory.readByte(refobj.reference);
@@ -184,6 +189,7 @@ function ExecuteClrInstruction(thread) {
             var refobj = frame.locals[index];
 
             switch (refobj.signature.TypeId) {
+                case 0x02: // bool
                 case 0x04: // i1
                 case 0x05:
                     appDomain.memory.writeByte(refobj.reference, value);
@@ -212,6 +218,7 @@ function ExecuteClrInstruction(thread) {
             var refobj = frame.locals[index];
 
             switch (refobj.signature.TypeId) {
+                case 0x02: // bool
                 case 0x04: // i1
                 case 0x05:
                     appDomain.memory.writeByte(refobj.reference, value);
@@ -1040,6 +1047,7 @@ function ExecuteClrInstruction(thread) {
                         var value;
 
                         switch (refobj.signature.TypeId) {
+                            case 0x02: // bool
                             case 0x04: // i1
                             case 0x05:
                                 value = appDomain.memory.readByte(refobj.reference);
@@ -1077,6 +1085,7 @@ function ExecuteClrInstruction(thread) {
                         var refobj = frame.arguments[index];
 
                         switch (refobj.signature.TypeId) {
+                            case 0x02: // bool
                             case 0x04: // i1
                             case 0x05:
                                 appDomain.memory.writeByte(refobj.reference, value);
@@ -1106,6 +1115,7 @@ function ExecuteClrInstruction(thread) {
                         var value;
 
                         switch (refobj.signature.TypeId) {
+                            case 0x02: // bool
                             case 0x04: // i1
                             case 0x05:
                                 value = appDomain.memory.readByte(refobj.reference);
@@ -1136,6 +1146,7 @@ function ExecuteClrInstruction(thread) {
                         var refobj = frame.locals[index];
 
                         switch (refobj.signature.TypeId) {
+                            case 0x02: // bool
                             case 0x04: // i1
                             case 0x05:
                                 appDomain.memory.writeByte(refobj.reference, value);
