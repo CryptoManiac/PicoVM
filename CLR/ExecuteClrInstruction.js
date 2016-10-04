@@ -292,11 +292,35 @@ function ExecuteClrInstruction(thread) {
         case 0x48: // ldind.i2
         case 0x4A: // ldind.i4
         case 0x4C: // ldind.i8 | ldind.u8
-            throw "Not yet implemented";
         case 0x47: // ldind.u1
         case 0x49: // ldind.u2
         case 0x4B: // ldind.u4
-            throw "Not yet implemented";
+            {
+                var reference = thread.stack.pop();
+                var value;
+                switch (opcode) {
+                    case 0x46: // ldind.i1
+                    case 0x47: // ldind.u1
+                        value = appDomain.memory.readByte(reference);
+                        break;
+                    case 0x48: // ldind.i2
+                    case 0x49: // ldind.u2
+                        value = appDomain.memory.readInt16(reference);
+                        break;
+                    case 0x4A: // ldind.i4
+                    case 0x4B: // ldind.u4
+                        value = appDomain.memory.readInt32(reference);
+                        break;
+                    case 0x4C: // ldind.i8 | ldind.u8
+                        value = appDomain.memory.readInt64(reference);
+                        break;
+                    default:
+                        throw "Wtf?";
+                }
+                thread.stack.push(value);
+                frame.instructionPointer += 1;
+                return true;
+            };
         case 0x25: // dup
             var value = thread.stack.pop();
             thread.stack.push(value);
