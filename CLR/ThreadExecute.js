@@ -157,7 +157,7 @@ function ThreadExecute() {
             case 6:
                 if (frame.locals) {
                     var mem = this.appDomain.memory;
-
+                    // Loop through locals array and mark the corresponding memory blocks as unused
                     for (var n = 0; n < frame.locals.length; ++n) {
                         if (frame.locals[n].reference) {
                             mem.free(frame.locals[n].reference);
@@ -166,7 +166,7 @@ function ThreadExecute() {
                 }
                 if (frame.arguments) {
                     var mem = this.appDomain.memory;
-
+                    // Loop through arguments array and mark the corresponding memory blocks as unused
                     for (var n = 0; n < frame.arguments.length; ++n) {
                         if (frame.arguments[n].reference) {
                             mem.free(frame.arguments[n].reference);
