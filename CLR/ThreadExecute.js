@@ -66,6 +66,8 @@ function ThreadExecute() {
                 var argumentValues = this.stack.splice(this.stack.length - frame.argumentsCount, frame.argumentsCount);
                 for (var n = 0; n < frame.argumentsCount; ++n) {
                     var typeMeta = frame.signature.Params[n].Type;
+
+                    // TODO: Rewrite in reasonable style. There should be no switches with these hard-coded values.
                     if (typeMeta.size) {
                         var refobj = this.appDomain.createValue(1, typeMeta);
 
@@ -107,7 +109,12 @@ function ThreadExecute() {
                             for (var n = 0; n < frame.locals.length; ++n) {
                                 var signature = frame.localsSignature.Locals[n];
                                 if (signature.size) {
+                                    // We have size info, so reserve new block of memory and initialize it with zeros.
                                     frame.locals[n] = this.appDomain.createValue(1, signature);
+                                } else {
+                                    // No size info available, looks like some composite tyle e.g. an array 
+                                    //   will be initiaized manually
+                                    frame.locals[n] = { signature : signature };
                                 }
                             }
                         }
