@@ -321,6 +321,34 @@ function ExecuteClrInstruction(thread) {
                 frame.instructionPointer += 1;
                 return true;
             };
+        case 0x52: // stind.i1
+        case 0x53: // stind.i2
+        case 0x54: // stind.i4
+        case 0x55: // stind.i8
+            {
+                var value = thread.stack.pop();
+                var reference = thread.stack.pop();
+
+                switch (opcode) {
+                    case 0x52: // stind.i1
+                        appDomain.memory.writeByte(reference, value);
+                        break;
+                    case 0x53: // stind.i2
+                        appDomain.memory.writeint16(reference, value);
+                        break;
+                    case 0x54: // stind.i4
+                        appDomain.memory.writeint32(reference, value);
+                        break;
+                    case 0x55: // stind.i8
+                        appDomain.memory.writeInt64(reference, value);
+                        break;
+                    default:
+                        throw "Wtf?";
+                };
+
+                frame.instructionPointer += 1;
+                return true;
+            };
         case 0x25: // dup
             var value = thread.stack.pop();
             thread.stack.push(value);
