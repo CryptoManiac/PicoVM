@@ -1,4 +1,6 @@
-var Heap = function() {
+const Int64 = require('int64-native').Int64;
+
+var Heap = function () {
 
     /**
      * Increase heap size
@@ -29,7 +31,7 @@ var Heap = function() {
         newHeap.set(this._Heap)
         this._Heap = newHeap;
 
-        var lastBlockBoundary = this.readInt(oldSize - 4);
+        var lastBlockBoundary = this.readInt32(oldSize - 4);
 
         if (lastBlockBoundary <= 0) {
             lastBlockBoundary = Math.abs(lastBlockBoundary);
@@ -42,8 +44,8 @@ var Heap = function() {
             var newBlockBeginning = oldSize - lastBlockBoundary;
             var newBlockSize = this._Heap.length - newBlockBeginning;
 
-            this.writeInt(newBlockBeginning, -newBlockSize);
-            this.writeInt(newBlockBeginning + newBlockSize - 4, -newBlockSize);
+            this.writeInt32(newBlockBeginning, -newBlockSize);
+            this.writeInt32(newBlockBeginning + newBlockSize - 4, -newBlockSize);
         } else {
             /** 
              * xx xx xx xx 01 23 45 67 ... AB CD EF F0 xx xx xx xx
@@ -52,35 +54,71 @@ var Heap = function() {
              *  to add new block at the end of buffer.
              */          
             var newBlockSize = newSize - oldSize;
-            this.writeInt(oldSize, -newBlockSize);
-            this.writeInt(oldSize + newBlockSize - 4, -newBlockSize);
+            this.writeInt32(oldSize, -newBlockSize);
+            this.writeInt32(oldSize + newBlockSize - 4, -newBlockSize);
         }
+    }
+
+    this.readByte = function (offset) {
+        return this._Heap[offset];
+    }
+
+    this.writeByte = function (offset, value) {
+        this._Heap[offset] = value & 0xFF;
+    }
+
+    /**
+     * Read 16 bit integer
+     */
+    this.readInt16 = function (offset) {
+        return this._Heap[offset] | (this._Heap[offset + 1] << 8);
+    }
+
+    /**
+     * Write 16 bit integer
+     */
+    this.writeInt16 = function (offset, value) {
+        this._Heap[offset] = value & 0xFF;
+        this._Heap[offset + 1] = value >> 8;
     }
 
     /**
      * Read 32 bit integer 
      */
-    this.readInt = function(offset){
-        var value = 0;
-        for (var n = 0; n < 4; ++n) {     
-            value += this._Heap[offset + n];
-            if (n < 3) {
-                value = value << 8;
-            }
-        }
-
-        return value;
+    this.readInt32 = function (offset){
+        return this._Heap[offset] | (this._Heap[offset + 1] << 8) | (this._Heap[offset + 2] << 16) | (this._Heap[offset + 3] << 24);
     }
 
     /**
      * Write 32 bit integer
      */
-    this.writeInt = function(offset, value){
-        var n = offset + 4;
-        do {
-            this._Heap[--n] = value & (255);
-            value = value >> 8;
-        } while ( n > offset );
+    this.writeInt32 = function (offset, value) {
+        this._Heap[offset]     = value & 0xFF;
+        this._Heap[offset + 1] = (value >> 8) & 0xFF;
+        this._Heap[offset + 2] = (value >> 16) & 0xFF;
+        this._Heap[offset + 3] = (value >> 24) & 0xFF;
+    }
+
+    /**
+     * Read 64 bit integer
+     */
+    this.readInt64 = function (offset) {
+        var bytes = this._Heap.slice(offset, offset + 8);
+        return new Int64(Array.from(bytes));
+    }
+
+    /**
+     * Write 64 bit integer
+     */
+    this.writeInt64 = function (offset, value) {
+        var bytes = value.toBytes();
+        this._Heap.set(bytes, offset);
+    }
+
+    this.fill = function (offset, size, value) {
+        for (var n = offset; n < offset + size; ++n) {
+            this._Heap[n] = value;
+        }
     }
 
     /**
@@ -91,7 +129,7 @@ var Heap = function() {
     this._findBlock = function (size) {
         var pos = 0;
         while (pos < this._Heap.length) {
-            var blockSize = this.readInt(pos);
+            var blockSize = this.readInt32(pos);
             if (blockSize < 0) {
                 if (!size || Math.abs(blockSize) - 8 >= size) {
                     return {size : Math.abs(blockSize), position: pos};
@@ -128,19 +166,19 @@ var Heap = function() {
              // Split found block in two, one for the data and 
              //   one for remaining free space.
 
-            this.writeInt(block.position, newBlockSize);
-            this.writeInt(block.position + newBlockSize - 4, newBlockSize);
+            this.writeInt32(block.position, newBlockSize);
+            this.writeInt32(block.position + newBlockSize - 4, newBlockSize);
 
             var freeSpace = block.size - newBlockSize;
 
             if (freeSpace > 8) {
                 // Create new block for the remaining free space.
-                this.writeInt(block.position + newBlockSize, -freeSpace);
-                this.writeInt(block.position + newBlockSize + freeSpace - 4, -freeSpace);
+                this.writeInt32(block.position + newBlockSize, -freeSpace);
+                this.writeInt32(block.position + newBlockSize + freeSpace - 4, -freeSpace);
             } else if (freeSpace == 8) {
                 // Create empty block record
-                this.writeInt(block.position + newBlockSize, -8);
-                this.writeInt(block.position + newBlockSize + 4, -8);
+                this.writeInt32(block.position + newBlockSize, -8);
+                this.writeInt32(block.position + newBlockSize + 4, -8);
             } else {
                 throw "WTF??";
             }
@@ -161,7 +199,7 @@ var Heap = function() {
      */
     this.free = function (offset) {
         var blockBeginning = offset - 4;
-        var beginMarker = this.readInt(blockBeginning);
+        var beginMarker = this.readInt32(blockBeginning);
         if (beginMarker < 0) {
             /**
              * Oooops, it looks like something went wrong.
@@ -169,7 +207,7 @@ var Heap = function() {
             throw "Attempting to run free() on unallocated chunk of memory";
         }
 
-        var endMarker = this.readInt(blockBeginning + beginMarker - 4);
+        var endMarker = this.readInt32(blockBeginning + beginMarker - 4);
 
         if (endMarker != beginMarker) {
             /**
@@ -178,8 +216,8 @@ var Heap = function() {
             throw "Invalid block metadata record";
         }
 
-        this.writeInt(blockBeginning, -beginMarker);
-        this.writeInt(blockBeginning + beginMarker - 4, -beginMarker);
+        this.writeInt32(blockBeginning, -beginMarker);
+        this.writeInt32(blockBeginning + beginMarker - 4, -beginMarker);
     }
 
     /**
@@ -193,7 +231,7 @@ var Heap = function() {
         var pos = 0;
         var freeBlocks = [];
         while (pos < this._Heap.length) {
-            var blockSize = this.readInt(pos);
+            var blockSize = this.readInt32(pos);
             if (blockSize < 0) {
                 freeBlocks.push({size : Math.abs(blockSize), position: pos});
             } else {
@@ -203,8 +241,8 @@ var Heap = function() {
                     }
 
                     var mergedBlockSize = freeBlocks[freeBlocks.length - 1].size + (freeBlocks[freeBlocks.length - 1].position - freeBlocks[0].position);
-                    this.writeInt(freeBlocks[0].position, -mergedBlockSize);
-                    this.writeInt(freeBlocks[freeBlocks.length - 1].position + freeBlocks[freeBlocks.length - 1].size - 4, -mergedBlockSize);
+                    this.writeInt32(freeBlocks[0].position, -mergedBlockSize);
+                    this.writeInt32(freeBlocks[freeBlocks.length - 1].position + freeBlocks[freeBlocks.length - 1].size - 4, -mergedBlockSize);
                     
                 } else {
                     freeBlocks.length = 0;
@@ -229,8 +267,8 @@ var Heap = function() {
      *  at the beginning and the end of block. Negative integer means that 
      *  block is free, available for allocation.
      */
-    this.writeInt(0, -this._Heap.length);
-    this.writeInt(this._Heap.length - 4, -this._Heap.length);
+    this.writeInt32(0, -this._Heap.length);
+    this.writeInt32(this._Heap.length - 4, -this._Heap.length);
 
     // var thisHeap = this;
     // setInterval(function () { thisHeap._gc.call(thisHeap) }, 100);

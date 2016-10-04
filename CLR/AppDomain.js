@@ -1,6 +1,7 @@
 const Assembly = require('./Assembly');
 const ThreadExecute = require('./ThreadExecute');
 const MscorlibAssembly = require('../FakeLib/MscorlibAssembly');
+const Heap = require('./Heap');
 
 function AppDomain() {
     var currentAppDomain = this;
@@ -10,6 +11,19 @@ function AppDomain() {
         this.threads.push(thread);
         return thread;
     }
+
+    this.memory = new Heap();
+    this.memoryIndex = [];
+
+    this.createValue = function (size, signature) {
+        var valueSize = size * signature.size;
+        var reference = this.memory.alloc(valueSize);
+        this.memory.fill(reference, valueSize, 0);
+
+        var entry = { signature : signature, size : size, reference : reference };
+        this.memoryIndex.push(entry);
+        return entry;
+    };
 
     this.heap = [];
 

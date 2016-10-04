@@ -61,7 +61,42 @@ function ThreadExecute() {
                 frame.signature = CliSignatureParser.parseMethodDefSig(methodDefSignature.createReader());
                 frame.state = 5;
                 frame.argumentsCount = getMethodArgumentsInStack(frame.signature);
-                frame.arguments = this.stack.splice(this.stack.length - frame.argumentsCount, frame.argumentsCount);
+                frame.arguments = [];
+
+                var argumentValues = this.stack.splice(this.stack.length - frame.argumentsCount, frame.argumentsCount);
+                for (var n = 0; n < frame.argumentsCount; ++n) {
+                    var typeMeta = frame.signature.Params[n].Type;
+                    if (typeMeta.size) {
+                        var refobj = this.appDomain.createValue(1, typeMeta);
+
+                        switch (refobj.signature.TypeId) {
+                            case 0x04: // i1
+                            case 0x05:
+                                this.appDomain.memory.writeByte(refobj.reference, argumentValues[n]);
+                                break;
+                            case 0x06: // i2
+                            case 0x07:
+                                this.appDomain.memory.writeInt16(refobj.reference, argumentValues[n]);
+                                break;
+                            case 0x08: // i4
+                            case 0x09:
+                                this.appDomain.memory.writeInt32(refobj.reference, argumentValues[n]);
+                                break;
+                            case 0x0a: // i8
+                            case 0x0b:
+                                this.appDomain.memory.writeInt64(refobj.reference, argumentValues[n]);
+                                break;
+                            
+                            default:
+                                throw "NYI";
+                        }
+
+                        frame.arguments[n] = refobj;
+                    } else {
+                        frame.arguments[n] = argumentValues[n];
+                    }
+                }
+
                 if (localVarSigTok != undefined && localVarSigTok != 0) {
                     frame.locals = [];
                     if (frame.methodBody.initLocals) {
@@ -69,6 +104,12 @@ function ThreadExecute() {
                         if (standAloneSigRow) {
                             frame.localsSignature = CliSignatureParser.parseLocalVarSig(standAloneSigRow.createReader());
                             frame.locals.length = frame.localsSignature.Count;
+                            for (var n = 0; n < frame.locals.length; ++n) {
+                                var signature = frame.localsSignature.Locals[n];
+                                if (signature.size) {
+                                    frame.locals[n] = this.appDomain.createValue(1, signature);
+                                }
+                            }
                         }
                         // console.log(frame);
                     }
@@ -107,6 +148,24 @@ function ThreadExecute() {
                 result = ExecuteClrInstruction(this);
                 break;
             case 6:
+                if (frame.locals) {
+                    var mem = this.appDomain.memory;
+
+                    for (var n = 0; n < frame.locals.length; ++n) {
+                        if (frame.locals[n].reference) {
+                            mem.free(frame.locals[n].reference);
+                        }
+                    }
+                }
+                if (frame.arguments) {
+                    var mem = this.appDomain.memory;
+
+                    for (var n = 0; n < frame.arguments.length; ++n) {
+                        if (frame.arguments[n].reference) {
+                            mem.free(frame.arguments[n].reference);
+                        }
+                    }
+                }
                 this.callStack.pop();
                 result = true;
                 break;

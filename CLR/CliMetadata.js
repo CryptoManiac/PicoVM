@@ -285,7 +285,7 @@ var CliSignatureParser = {
                     break;
                 case 0x0A: // long
                 case 0x0B: // ulong
-                    signature.size = 4;
+                    signature.size = 8;
                     break;
                 default:
             }
