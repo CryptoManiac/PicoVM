@@ -205,8 +205,8 @@ function ExecuteClrInstruction(thread) {
                 case 0x0a: // i8
                 case 0x0b:
                     appDomain.memory.writeInt64(refobj.reference, value);
-                    break;
-                            
+
+                    break;       
                 default:
                     throw "NYI";
             }
@@ -1276,8 +1276,6 @@ function ExecuteClrInstruction(thread) {
                             frame.instructionPointer += 2;
                             return true;
                         };
-
-                        break;
 
                     default:
                         throw "Unknown instruction: 0xfe 0x" + suffix.toString(16);

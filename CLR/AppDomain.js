@@ -157,6 +157,9 @@ function AppDomain() {
 
     function AppDomain_tick() {
         if (this.threads.length > 0) {
+            // Run memory defragmentation
+            this.memory._gc();
+
             for (var attempts = this.threads.length; attempts > 0; --attempts) {
                 if (currentThreadIndex >= this.threads.length)
                     currentThreadIndex = 0;

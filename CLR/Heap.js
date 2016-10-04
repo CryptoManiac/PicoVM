@@ -27,7 +27,7 @@ var Heap = function () {
          * Allocate new buffer which size is enough to contain
          *  the current buffer and metadata. 
          */
-        var newHeap = new Uint8Array(newSize);
+        var newHeap = new Buffer(newSize);
         newHeap.set(this._Heap)
         this._Heap = newHeap;
 
@@ -115,6 +115,9 @@ var Heap = function () {
         this._Heap.set(bytes, offset);
     }
 
+    /**
+     * Fill memory range with specified value.
+     */
     this.fill = function (offset, size, value) {
         for (var n = offset; n < offset + size; ++n) {
             this._Heap[n] = value;
@@ -258,7 +261,7 @@ var Heap = function () {
      * New heap is a block of 1024 bytes 
      * which is surrounded by 4 byte chunks of metadata.
      */ 
-    this._Heap = new Uint8Array(1024 + 8);
+    this._Heap = new Buffer(4096 + 8);
     
     /**
      * Fill the block metadata. 
