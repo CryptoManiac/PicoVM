@@ -134,7 +134,7 @@ var Heap = function () {
         while (pos < this._Heap.length) {
             var blockSize = this.readInt32(pos);
             if (blockSize < 0) {
-                if (!size || Math.abs(blockSize) - 8 >= size) {
+                if (!size || Math.abs(blockSize) >= size) {
                     return {size : Math.abs(blockSize), position: pos};
                 }
             }
@@ -182,6 +182,8 @@ var Heap = function () {
                 // Create empty block record
                 this.writeInt32(block.position + newBlockSize, -8);
                 this.writeInt32(block.position + newBlockSize + 4, -8);
+            } else if (freeSpace == 0) {
+                // do nothing
             } else {
                 throw "WTF??";
             }
@@ -237,22 +239,22 @@ var Heap = function () {
             var blockSize = this.readInt32(pos);
             if (blockSize < 0) {
                 freeBlocks.push({size : Math.abs(blockSize), position: pos});
-            } else {
-                if (freeBlocks.length >= 2) {
-                    for (var n = 0; n < freeBlocks.length; ++n) {
-                        console.log(freeBlocks[n]);
-                    }
 
+                if (freeBlocks.length >= 2) {
+                    //for (var n = 0; n < freeBlocks.length; ++n) {
+                    //    console.log('gc:', freeBlocks[n]);
+                    //}
+                    
                     var mergedBlockSize = freeBlocks[freeBlocks.length - 1].size + (freeBlocks[freeBlocks.length - 1].position - freeBlocks[0].position);
                     this.writeInt32(freeBlocks[0].position, -mergedBlockSize);
                     this.writeInt32(freeBlocks[freeBlocks.length - 1].position + freeBlocks[freeBlocks.length - 1].size - 4, -mergedBlockSize);
                     
-                } else {
-                    freeBlocks.length = 0;
                 }
-                // console.log('---------');
-            }
 
+            } else {
+                freeBlocks.length = 0;
+            }
+            
             pos += Math.abs(blockSize);
         }
     }
