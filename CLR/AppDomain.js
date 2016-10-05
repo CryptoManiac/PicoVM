@@ -15,12 +15,57 @@ function AppDomain() {
     this.memory = new Heap();
     this.memoryIndex = [];
 
+    function Entry(signature, size, memory, reference, getter, setter) {
+        this.signature = signature;
+        this.size = size;
+        this.reference = reference;
+        this._getter = getter;
+        this._setter = setter;
+        this._memory = memory;
+
+        this.Get = function () {
+            return this._getter.call(this._memory, this.reference);
+        };
+
+        this.Set = function (value) {
+            this._setter.call(this._memory, this.reference, value);
+        }
+    }
+
     this.createValue = function (size, signature) {
         var valueSize = size * signature.size;
         var reference = this.memory.alloc(valueSize);
         this.memory.fill(reference, valueSize, 0);
 
-        var entry = { signature : signature, size : size, reference : reference };
+        var getter, setter;
+
+        switch (signature.TypeId) {
+            case 0x02: // bool
+            case 0x04: // i1
+            case 0x05:
+                setter = this.memory.writeByte;
+                getter = this.memory.readByte;
+                break;
+            case 0x06: // i2
+            case 0x07:
+                setter = this.memory.writeInt16;
+                getter = this.memory.readInt16;
+                break;
+            case 0x08: // i4
+            case 0x09:
+                setter = this.memory.writeInt32;
+                getter = this.memory.readInt32;
+                break;
+            case 0x0a: // i8
+            case 0x0b:
+                setter = this.memory.writeInt64;
+                getter = this.memory.readInt64;
+                break;
+            default:
+                throw "NYI";
+        }
+
+        var entry = new Entry(signature, size, this.memory, reference, getter, setter);
         this.memoryIndex.push(entry);
         return entry;
     };

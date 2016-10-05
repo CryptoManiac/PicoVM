@@ -29,30 +29,7 @@ function ExecuteClrInstruction(thread) {
         case 0x05: // ldarg.3
             var index = methodData[frame.instructionPointer++] - 0x02;
             var refobj = frame.arguments[index];
-            var value;
-
-            switch (refobj.signature.TypeId) {
-                case 0x02: // bool
-                case 0x04: // i1
-                case 0x05:
-                    value = appDomain.memory.readByte(refobj.reference);
-                    break;
-                case 0x06: // i2
-                case 0x07:
-                    value = appDomain.memory.readInt16(refobj.reference);
-                    break;
-                case 0x08: // i4
-                case 0x09:
-                    value = appDomain.memory.readInt32(refobj.reference);
-                    break;
-                case 0x0a: // i8
-                case 0x0b:
-                    value = appDomain.memory.readInt64(refobj.reference);
-                    break;
-                default:
-                    throw "NYI";
-            }
-
+            var value = refobj.Get();
             thread.stack.push(value);
             return true;
         case 0x06: // ldloc 0..3
@@ -61,58 +38,13 @@ function ExecuteClrInstruction(thread) {
         case 0x09:
             var index = methodData[frame.instructionPointer++] - 0x06;
             var refobj = frame.locals[index];
-            var value;
-
-            switch (refobj.signature.TypeId) {
-                case 0x02: // bool
-                case 0x04: // i1
-                case 0x05:
-                    value = appDomain.memory.readByte(refobj.reference);
-                    break;
-                case 0x06: // i2
-                case 0x07:
-                    value = appDomain.memory.readInt16(refobj.reference);
-                    break;
-                case 0x08: // i4
-                case 0x09:
-                    value = appDomain.memory.readInt32(refobj.reference);
-                    break;
-                case 0x0a: // i8
-                case 0x0b:
-                    value = appDomain.memory.readInt64(refobj.reference);
-                    break;
-                default:
-                    throw "NYI";
-            }
-
+            var value = refobj.Get();
             thread.stack.push(value);
             return true;
         case 0x0E: // ldarg.s <index>
             var index = methodData[frame.instructionPointer + 1];
             var refobj = frame.arguments[index];
-            var value;
-            switch (refobj.signature.TypeId) {
-                case 0x02: // bool
-                case 0x04: // i1
-                case 0x05:
-                    value = appDomain.memory.readByte(refobj.reference);
-                    break;
-                case 0x06: // i2
-                case 0x07:
-                    value = appDomain.memory.readInt16(refobj.reference);
-                    break;
-                case 0x08: // i4
-                case 0x09:
-                    value = appDomain.memory.readInt32(refobj.reference);
-                    break;
-                case 0x0a: // i8
-                case 0x0b:
-                    value = appDomain.memory.readInt64(refobj.reference);
-                    break;
-                default:
-                    throw "NYI";
-            }
-
+            var value = refobj.Get();
             thread.stack.push(value);
             frame.instructionPointer += 2;
             return true;
@@ -126,57 +58,13 @@ function ExecuteClrInstruction(thread) {
             var value = thread.stack.pop();
             var index = methodData[frame.instructionPointer + 1];
             var refobj = frame.arguments[index];
-
-            switch (refobj.signature.TypeId) {
-                case 0x02: // bool
-                case 0x04: // i1
-                case 0x05:
-                    appDomain.memory.writeByte(refobj.reference, value);
-                    break;
-                case 0x06: // i2
-                case 0x07:
-                    appDomain.memory.writeInt16(refobj.reference, value);
-                    break;
-                case 0x08: // i4
-                case 0x09:
-                    appDomain.memory.writeInt32(refobj.reference, value);
-                    break;
-                case 0x0a: // i8
-                case 0x0b:
-                    appDomain.memory.writeInt64(refobj.reference, value);
-                    break;
-                            
-                default:
-                    throw "NYI";
-            }
+            refobj.Set(value);
             frame.instructionPointer += 2;
             return true;
         case 0x11: // ldloc.s <index>
             var index = methodData[frame.instructionPointer + 1];
             var refobj = frame.locals[index];
-            var value;
-
-            switch (refobj.signature.TypeId) {
-                case 0x02: // bool
-                case 0x04: // i1
-                case 0x05:
-                    value = appDomain.memory.readByte(refobj.reference);
-                    break;
-                case 0x06: // i2
-                case 0x07:
-                    value = appDomain.memory.readInt16(refobj.reference);
-                    break;
-                case 0x08: // i4
-                case 0x09:
-                    value = appDomain.memory.readInt32(refobj.reference);
-                    break;
-                case 0x0a: // i8
-                case 0x0b:
-                    value = appDomain.memory.readInt64(refobj.reference);
-                    break;
-                default:
-                    throw "NYI";
-            }
+            var value = refobj.Get();
             thread.stack.push(value);
             frame.instructionPointer += 2;
             return true;
@@ -187,59 +75,13 @@ function ExecuteClrInstruction(thread) {
             var value = thread.stack.pop();
             var index = methodData[frame.instructionPointer++] - 0x0A;
             var refobj = frame.locals[index];
-
-            switch (refobj.signature.TypeId) {
-                case 0x02: // bool
-                case 0x04: // i1
-                case 0x05:
-                    appDomain.memory.writeByte(refobj.reference, value);
-                    break;
-                case 0x06: // i2
-                case 0x07:
-                    appDomain.memory.writeInt16(refobj.reference, value);
-                    break;
-                case 0x08: // i4
-                case 0x09:
-                    appDomain.memory.writeInt32(refobj.reference, value);
-                    break;
-                case 0x0a: // i8
-                case 0x0b:
-                    appDomain.memory.writeInt64(refobj.reference, value);
-
-                    break;       
-                default:
-                    throw "NYI";
-            }
-
+            refobj.Set(value);
             return true;
         case 0x13: // stloc.s <index>
             var value = thread.stack.pop();
             var index = methodData[frame.instructionPointer + 1];
             var refobj = frame.locals[index];
-
-            switch (refobj.signature.TypeId) {
-                case 0x02: // bool
-                case 0x04: // i1
-                case 0x05:
-                    appDomain.memory.writeByte(refobj.reference, value);
-                    break;
-                case 0x06: // i2
-                case 0x07:
-                    appDomain.memory.writeInt16(refobj.reference, value);
-                    break;
-                case 0x08: // i4
-                case 0x09:
-                    appDomain.memory.writeInt32(refobj.reference, value);
-                    break;
-                case 0x0a: // i8
-                case 0x0b:
-                    appDomain.memory.writeInt64(refobj.reference, value);
-                    break;
-                            
-                default:
-                    throw "NYI";
-            }
-
+            refobj.Set(value);
             frame.instructionPointer += 2;
             return true;
         case 0x14: // ldnull
@@ -1096,30 +938,7 @@ function ExecuteClrInstruction(thread) {
                     case 0x09: // ldarg <index>
                         var index = methodData[frame.instructionPointer + 1] | (methodData[frame.instructionPointer + 2] << 8);
                         var refobj = frame.arguments[index];
-                        var value;
-
-                        switch (refobj.signature.TypeId) {
-                            case 0x02: // bool
-                            case 0x04: // i1
-                            case 0x05:
-                                value = appDomain.memory.readByte(refobj.reference);
-                                break;
-                            case 0x06: // i2
-                            case 0x07:
-                                value = appDomain.memory.readInt16(refobj.reference);
-                                break;
-                            case 0x08: // i4
-                            case 0x09:
-                                value = appDomain.memory.readInt32(refobj.reference);
-                                break;
-                            case 0x0a: // i8
-                            case 0x0b:
-                                value = appDomain.memory.readInt64(refobj.reference);
-                                break;
-                            default:
-                                throw "NYI";
-                        }
-
+                        var value = refobj.Get();
                         thread.stack.push(value);
                         frame.instructionPointer += 4;
                         return true;
@@ -1135,59 +954,14 @@ function ExecuteClrInstruction(thread) {
                         var value = thread.stack.pop();
                         var index = methodData[frame.instructionPointer + 1] | (methodData[frame.instructionPointer + 2] << 8);
                         var refobj = frame.arguments[index];
-
-                        switch (refobj.signature.TypeId) {
-                            case 0x02: // bool
-                            case 0x04: // i1
-                            case 0x05:
-                                appDomain.memory.writeByte(refobj.reference, value);
-                                break;
-                            case 0x06: // i2
-                            case 0x07:
-                                appDomain.memory.writeInt16(refobj.reference, value);
-                                break;
-                            case 0x08: // i4
-                            case 0x09:
-                                appDomain.memory.writeInt32(refobj.reference, value);
-                                break;
-                            case 0x0a: // i8
-                            case 0x0b:
-                                appDomain.memory.writeInt64(refobj.reference, value);
-                                break;
-                                        
-                            default:
-                                throw "NYI";
-                        }
+                        refobj.Set(value);
                         frame.instructionPointer += 4;
                         return true;
 
                     case 0x0C: // ldloc <index>
                         var index = methodData[frame.instructionPointer + 1] | (methodData[frame.instructionPointer + 2] << 8);
                         var refobj = frame.locals[index];
-                        var value;
-
-                        switch (refobj.signature.TypeId) {
-                            case 0x02: // bool
-                            case 0x04: // i1
-                            case 0x05:
-                                value = appDomain.memory.readByte(refobj.reference);
-                                break;
-                            case 0x06: // i2
-                            case 0x07:
-                                value = appDomain.memory.readInt16(refobj.reference);
-                                break;
-                            case 0x08: // i4
-                            case 0x09:
-                                value = appDomain.memory.readInt32(refobj.reference);
-                                break;
-                            case 0x0a: // i8
-                            case 0x0b:
-                                value = appDomain.memory.readInt64(refobj.reference);
-                                break;
-                            default:
-                                throw "NYI";
-                        }
-
+                        var value = refobj.Get();
                         thread.stack.push(value);
                         frame.instructionPointer += 4;
                         return true;
@@ -1196,30 +970,7 @@ function ExecuteClrInstruction(thread) {
                         var value = thread.stack.pop();
                         var index = methodData[frame.instructionPointer + 1] | (methodData[frame.instructionPointer + 2] << 8);
                         var refobj = frame.locals[index];
-
-                        switch (refobj.signature.TypeId) {
-                            case 0x02: // bool
-                            case 0x04: // i1
-                            case 0x05:
-                                appDomain.memory.writeByte(refobj.reference, value);
-                                break;
-                            case 0x06: // i2
-                            case 0x07:
-                                appDomain.memory.writeInt16(refobj.reference, value);
-                                break;
-                            case 0x08: // i4
-                            case 0x09:
-                                appDomain.memory.writeInt32(refobj.reference, value);
-                                break;
-                            case 0x0a: // i8
-                            case 0x0b:
-                                appDomain.memory.writeInt64(refobj.reference, value);
-                                break;
-                            
-                            default:
-                                throw "NYI";
-                        }
-                        
+                        refobj.Set(value);                        
                         frame.instructionPointer += 4;
                         return true;
 
