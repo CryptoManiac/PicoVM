@@ -69,31 +69,8 @@ function ThreadExecute() {
 
                     // TODO: Rewrite in reasonable style. There should be no switches with these hard-coded values.
                     if (typeMeta.size) {
-                        var refobj = this.appDomain.createValue(1, typeMeta);
-
-                        switch (refobj.signature.TypeId) {
-                            case 0x04: // i1
-                            case 0x05:
-                                this.appDomain.memory.writeByte(refobj.reference, argumentValues[n]);
-                                break;
-                            case 0x06: // i2
-                            case 0x07:
-                                this.appDomain.memory.writeInt16(refobj.reference, argumentValues[n]);
-                                break;
-                            case 0x08: // i4
-                            case 0x09:
-                                this.appDomain.memory.writeInt32(refobj.reference, argumentValues[n]);
-                                break;
-                            case 0x0a: // i8
-                            case 0x0b:
-                                this.appDomain.memory.writeInt64(refobj.reference, argumentValues[n]);
-                                break;
-                            
-                            default:
-                                throw "NYI";
-                        }
-
-                        frame.arguments[n] = refobj;
+                        frame.arguments[n] = this.appDomain.createValue(1, typeMeta);
+                        frame.arguments[n].Set(argumentValues[n]);
                     } else {
                         frame.arguments[n] = argumentValues[n];
                     }
